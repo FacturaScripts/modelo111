@@ -1,7 +1,7 @@
 <?php
 /**
  * This file is part of Modelo111 plugin for FacturaScripts
- * Copyright (C) 2020 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Copyright (C) 2020-2023 Carlos Garcia Gomez <carlos@facturascripts.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -16,9 +16,11 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 namespace FacturaScripts\Plugins\Modelo111\Controller;
 
 use FacturaScripts\Core\Base\Controller;
+use FacturaScripts\Core\DataSrc\Ejercicios;
 use FacturaScripts\Dinamic\Lib\Accounting\AccountingAccounts;
 use FacturaScripts\Dinamic\Model\Asiento;
 use FacturaScripts\Dinamic\Model\Ejercicio;
@@ -32,58 +34,41 @@ use FacturaScripts\Dinamic\Model\Retencion;
  */
 class Modelo111 extends Controller
 {
-
-    /**
-     *
-     * @var string
-     */
+    /** @var string */
     public $codejercicio;
 
-    /**
-     *
-     * @var string
-     */
+    /** @var string */
     public $dateEnd;
 
-    /**
-     *
-     * @var string
-     */
+    /** @var string */
     public $dateStart;
 
-    /**
-     *
-     * @var Partida[]
-     */
+    /** @var Partida[] */
     public $entryLines = [];
 
-    /**
-     *
-     * @var int
-     */
+    /** @var int */
     public $numrecipients = 0;
 
-    /**
-     *
-     * @var string
-     */
+    /** @var string */
     public $period = 'T1';
 
-    /**
-     * 
-     * @return Ejercicio[]
-     */
-    public function allExercises()
+    /** @return Ejercicio[] */
+    public function allExercises(?int $idempresa): array
     {
-        $ejercicio = new Ejercicio();
-        return $ejercicio->all([], ['nombre' => 'DESC']);
+        if (empty($idempresa)) {
+            return Ejercicios::all();
+        }
+
+        $list = [];
+        foreach (Ejercicios::all() as $exercise) {
+            if ($exercise->idempresa == $idempresa) {
+                $list[] = $exercise;
+            }
+        }
+        return $list;
     }
 
-    /**
-     * 
-     * @return array
-     */
-    public function allPeriods()
+    public function allPeriods(): array
     {
         return [
             'T1' => 'first-trimester',
@@ -93,10 +78,6 @@ class Modelo111 extends Controller
         ];
     }
 
-    /**
-     * 
-     * @return array
-     */
     public function getPageData(): array
     {
         $data = parent::getPageData();
@@ -114,7 +95,7 @@ class Modelo111 extends Controller
         $this->loadResults();
     }
 
-    protected function loadDates()
+    protected function loadDates(): void
     {
         $this->codejercicio = $this->request->request->get('codejercicio', '');
         $this->period = $this->request->request->get('period', $this->period);
@@ -124,28 +105,28 @@ class Modelo111 extends Controller
 
         switch ($this->period) {
             case 'T1':
-                $this->dateStart = \date('01-01-Y', \strtotime($exercise->fechainicio));
-                $this->dateEnd = \date('31-03-Y', \strtotime($exercise->fechainicio));
+                $this->dateStart = date('01-01-Y', strtotime($exercise->fechainicio));
+                $this->dateEnd = date('31-03-Y', strtotime($exercise->fechainicio));
                 break;
 
             case 'T2':
-                $this->dateStart = \date('01-04-Y', \strtotime($exercise->fechainicio));
-                $this->dateEnd = \date('30-06-Y', \strtotime($exercise->fechainicio));
+                $this->dateStart = date('01-04-Y', strtotime($exercise->fechainicio));
+                $this->dateEnd = date('30-06-Y', strtotime($exercise->fechainicio));
                 break;
 
             case 'T3':
-                $this->dateStart = \date('01-07-Y', \strtotime($exercise->fechainicio));
-                $this->dateEnd = \date('30-09-Y', \strtotime($exercise->fechainicio));
+                $this->dateStart = date('01-07-Y', strtotime($exercise->fechainicio));
+                $this->dateEnd = date('30-09-Y', strtotime($exercise->fechainicio));
                 break;
 
             default:
-                $this->dateStart = \date('01-10-Y', \strtotime($exercise->fechainicio));
-                $this->dateEnd = \date('31-12-Y', \strtotime($exercise->fechainicio));
+                $this->dateStart = date('01-10-Y', strtotime($exercise->fechainicio));
+                $this->dateEnd = date('31-12-Y', strtotime($exercise->fechainicio));
                 break;
         }
     }
 
-    protected function loadEntryLines()
+    protected function loadEntryLines(): void
     {
         if (empty($this->codejercicio)) {
             return;
@@ -164,20 +145,20 @@ class Modelo111 extends Controller
             . ' LEFT JOIN ' . Asiento::tableName() . ' as a ON p.idasiento = a.idasiento'
             . ' WHERE a.codejercicio = ' . $this->dataBase->var2str($this->codejercicio)
             . ' AND a.fecha BETWEEN ' . $this->dataBase->var2str($this->dateStart) . ' AND ' . $this->dataBase->var2str($this->dateEnd)
-            . ' AND p.idsubcuenta IN (' . \implode(',', $idsubs) . ')';
+            . ' AND p.idsubcuenta IN (' . implode(',', $idsubs) . ')';
         foreach ($this->dataBase->select($sql) as $row) {
             $this->entryLines[] = new Partida($row);
         }
     }
 
-    protected function loadResults()
+    protected function loadResults(): void
     {
         $recipients = [];
         foreach ($this->entryLines as $line) {
             $recipients[$line->codcontrapartida] = $line->codcontrapartida;
-            
+
         }
 
-        $this->numrecipients = \count($recipients);
+        $this->numrecipients = count($recipients);
     }
 }
