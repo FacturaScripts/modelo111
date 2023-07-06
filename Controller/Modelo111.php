@@ -132,20 +132,26 @@ class Modelo111 extends Controller
             return;
         }
 
-        $idsubs = [];
+        $ids = [];
         $tools = new AccountingAccounts();
         $tools->exercise->loadFromCode($this->codejercicio);
         $retentionModel = new Retencion();
         foreach ($retentionModel->all() as $retention) {
-            $subaccount = $tools->getIRPFPurchaseAccount($retention);
-            $idsubs[$subaccount->primaryColumnValue()] = $subaccount->primaryColumnValue();
+            $subAccount = $tools->getIRPFPurchaseAccount($retention);
+            if ($subAccount->exists()) {
+                $ids[$subAccount->primaryColumnValue()] = $subAccount->primaryColumnValue();
+            }
+        }
+        if (empty($ids)) {
+            return;
         }
 
         $sql = 'SELECT * FROM ' . Partida::tableName() . ' as p'
             . ' LEFT JOIN ' . Asiento::tableName() . ' as a ON p.idasiento = a.idasiento'
             . ' WHERE a.codejercicio = ' . $this->dataBase->var2str($this->codejercicio)
-            . ' AND a.fecha BETWEEN ' . $this->dataBase->var2str($this->dateStart) . ' AND ' . $this->dataBase->var2str($this->dateEnd)
-            . ' AND p.idsubcuenta IN (' . implode(',', $idsubs) . ')';
+            . ' AND a.fecha BETWEEN ' . $this->dataBase->var2str($this->dateStart)
+            . ' AND ' . $this->dataBase->var2str($this->dateEnd)
+            . ' AND p.idsubcuenta IN (' . implode(',', $ids) . ')';
         foreach ($this->dataBase->select($sql) as $row) {
             $this->entryLines[] = new Partida($row);
         }
@@ -156,7 +162,6 @@ class Modelo111 extends Controller
         $recipients = [];
         foreach ($this->entryLines as $line) {
             $recipients[$line->codcontrapartida] = $line->codcontrapartida;
-
         }
 
         $this->numrecipients = count($recipients);
