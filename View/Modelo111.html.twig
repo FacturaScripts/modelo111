@@ -6,9 +6,9 @@
             <div class="row">
                 <div class="col">
                     <h1 class="h2">
-                        <i class="fas fa-book fa-fw"></i> {{ i18n.trans(fsc.title) }}
+                        <i class="fas fa-book fa-fw"></i> {{ trans(fsc.title) }}
                     </h1>
-                    <p>{{ i18n.trans('model-111-p') }}</p>
+                    <p>{{ trans('model-111-p') }}</p>
                 </div>
             </div>
             <div class="row align-items-end">
@@ -101,8 +101,8 @@
                                         <td>{{ item.codsubcuenta }}</td>
                                         <td>{{ item.codcontrapartida }}</td>
                                         <td>{{ item.concepto | raw }}</td>
-                                        <td class="text-right">{{ fsc.toolBox().coins().format(item.debe) }}</td>
-                                        <td class="text-right">{{ fsc.toolBox().coins().format(item.haber) }}</td>
+                                        <td class="text-right">{{ money(item.debe) }}</td>
+                                        <td class="text-right">{{ money(item.haber) }}</td>
                                         <td class="text-right">{{ item.fecha }}</td>
                                     </tr>
                                 {% else %}
