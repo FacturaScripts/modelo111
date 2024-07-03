@@ -74,7 +74,8 @@ class Modelo111 extends Controller
             'T1' => 'first-trimester',
             'T2' => 'second-trimester',
             'T3' => 'third-trimester',
-            'T4' => 'fourth-trimester'
+            'T4' => 'fourth-trimester',
+            'Annual' => 'annual-190',
         ];
     }
 
@@ -82,7 +83,7 @@ class Modelo111 extends Controller
     {
         $data = parent::getPageData();
         $data['menu'] = 'reports';
-        $data['title'] = 'model-111';
+        $data['title'] = 'model-111-190';
         $data['icon'] = 'fas fa-book';
         return $data;
     }
@@ -117,6 +118,11 @@ class Modelo111 extends Controller
             case 'T3':
                 $this->dateStart = date('01-07-Y', strtotime($exercise->fechainicio));
                 $this->dateEnd = date('30-09-Y', strtotime($exercise->fechainicio));
+                break;
+
+            case 'Annual':
+                $this->dateStart = date('01-01-Y', strtotime($exercise->fechainicio));
+                $this->dateEnd = date('31-12-Y', strtotime($exercise->fechainicio));
                 break;
 
             default:
