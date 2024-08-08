@@ -1,4 +1,8 @@
 {
+    "annual-190": "Anual (Modelo 190)",
     "model-111": "Modelo 111",
-    "model-111-p": "O Modelo 111 é unha declaración trimestral das retencións do IRPF practicadas a traballadores, profesionáis e empresarios."
+    "model-111-190": "Modelo 111 e 190",
+    "model-111-p": "O Modelo 111 é unha declaración trimestral das retencións do IRPF practicadas a traballadores, profesionáis e empresarios.",
+    "model-190": "Modelo 190",
+    "model-190-p": "O Modelo 190 é unha declaración anual das retencións do IRPF practicadas a traballadores, profesionais e empresarios."
 }

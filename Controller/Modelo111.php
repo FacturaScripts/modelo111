@@ -1,7 +1,7 @@
 <?php
 /**
  * This file is part of Modelo111 plugin for FacturaScripts
- * Copyright (C) 2020-2023 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Copyright (C) 2020-2024 Carlos Garcia Gomez <carlos@facturascripts.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -20,12 +20,14 @@
 namespace FacturaScripts\Plugins\Modelo111\Controller;
 
 use FacturaScripts\Core\Base\Controller;
+use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\DataSrc\Ejercicios;
-use FacturaScripts\Dinamic\Lib\Accounting\AccountingAccounts;
 use FacturaScripts\Dinamic\Model\Asiento;
+use FacturaScripts\Dinamic\Model\CuentaEspecial;
 use FacturaScripts\Dinamic\Model\Ejercicio;
 use FacturaScripts\Dinamic\Model\Partida;
 use FacturaScripts\Dinamic\Model\Retencion;
+use FacturaScripts\Dinamic\Model\Subcuenta;
 
 /**
  * Description of Modelo111
@@ -138,14 +140,38 @@ class Modelo111 extends Controller
             return;
         }
 
+        // obtenemos el listado de subcuentas de IRPF del ejercicio
         $ids = [];
-        $tools = new AccountingAccounts();
-        $tools->exercise->loadFromCode($this->codejercicio);
+
+        $special = new CuentaEspecial();
+        $where = [new DataBaseWhere('codcuentaesp', 'IRPFPR')];
+        if ($special->loadFromCode('', $where)) {
+            foreach ($special->getCuenta($this->codejercicio)->getSubcuentas() as $subcuenta) {
+                $ids[$subcuenta->primaryColumnValue()] = $subcuenta->primaryColumnValue();
+            }
+        }
+
+        // añadimos las de las retenciones
         $retentionModel = new Retencion();
         foreach ($retentionModel->all() as $retention) {
-            $subAccount = $tools->getIRPFPurchaseAccount($retention);
-            if ($subAccount->exists()) {
-                $ids[$subAccount->primaryColumnValue()] = $subAccount->primaryColumnValue();
+            $subcuenta = new Subcuenta();
+
+            // subcuenta para compras
+            $whereAcr = [
+                new DataBaseWhere('codejercicio', $this->codejercicio),
+                new DataBaseWhere('codsubcuenta', $retention->codsubcuentaacr)
+            ];
+            if ($retention->codsubcuentaacr && $subcuenta->loadFromCode('', $whereAcr)) {
+                $ids[$subcuenta->primaryColumnValue()] = $subcuenta->primaryColumnValue();
+            }
+
+            // subcuenta para ventas
+            $whereRet = [
+                new DataBaseWhere('codejercicio', $this->codejercicio),
+                new DataBaseWhere('codsubcuenta', $retention->codsubcuentaret)
+            ];
+            if ($retention->codsubcuentaret && $subcuenta->loadFromCode('', $whereRet)) {
+                $ids[$subcuenta->primaryColumnValue()] = $subcuenta->primaryColumnValue();
             }
         }
         if (empty($ids)) {
