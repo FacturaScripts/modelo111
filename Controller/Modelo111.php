@@ -86,7 +86,7 @@ class Modelo111 extends Controller
         $data = parent::getPageData();
         $data['menu'] = 'reports';
         $data['title'] = 'model-111-190';
-        $data['icon'] = 'fas fa-book';
+        $data['icon'] = 'fa-solid fa-book';
         return $data;
     }
 
