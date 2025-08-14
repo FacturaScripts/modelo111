@@ -14,9 +14,9 @@
             </div>
             <div class="row align-items-end">
                 <div class="col-sm-3">
-                    <div class="form-group">
+                    <div class="mb-3">
                         {{ trans('exercise') }}
-                        <select name="codejercicio" class="form-control" required>
+                        <select name="codejercicio" class="form-select" required>
                             {% for company in fsc.empresa.all() %}
                                 <optgroup label="{{ company.nombrecorto }}">
                                     {% for exercise in fsc.allExercises(company.idempresa) %}
@@ -32,9 +32,9 @@
                     </div>
                 </div>
                 <div class="col-sm-3">
-                    <div class="form-group">
+                    <div class="mb-3">
                         {{ trans('period') }}
-                        <select name="period" class="form-control" required>
+                        <select name="period" class="form-select" required>
                             {% for period, label in fsc.allPeriods() %}
                                 {% if period == fsc.period %}
                                     <option value="{{ period }}" selected>{{ trans(label) }}</option>
@@ -46,7 +46,7 @@
                     </div>
                 </div>
                 <div class="col">
-                    <div class="form-group">
+                    <div class="mb-3">
                         <button type="submit" name="action" value="show" class="btn btn-primary">
                             <i class="fa-solid fa-eye fa-fw"></i> {{ trans('preview') }}
                         </button>
@@ -63,13 +63,11 @@
                 </div>
                 <div class="row">
                     <div class="col">
-                        <div class="form-group">
+                        <div class="mb-3">
                             {{ trans('number-recipients') }}
                             <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">01</span>
-                                </div>
-                                <input type="number" value="{{ fsc.numrecipients }}" class="form-control text-right"
+                                <span class="input-group-text">01</span>
+                                <input type="number" value="{{ fsc.numrecipients }}" class="form-control text-end"
                                        readonly/>
                             </div>
                         </div>
@@ -88,9 +86,9 @@
                                     <th>{{ trans('subaccount') }}</th>
                                     <th>{{ trans('counterpart') }}</th>
                                     <th>{{ trans('concept') }}</th>
-                                    <th class="text-right">{{ trans('debit') }}</th>
-                                    <th class="text-right">{{ trans('credit') }}</th>
-                                    <th class="text-right">{{ trans('date') }}</th>
+                                    <th class="text-end">{{ trans('debit') }}</th>
+                                    <th class="text-end">{{ trans('credit') }}</th>
+                                    <th class="text-end">{{ trans('date') }}</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -102,9 +100,9 @@
                                         <td>{{ item.codsubcuenta }}</td>
                                         <td>{{ item.codcontrapartida }}</td>
                                         <td>{{ item.concepto | raw }}</td>
-                                        <td class="text-right">{{ money(item.debe) }}</td>
-                                        <td class="text-right">{{ money(item.haber) }}</td>
-                                        <td class="text-right">{{ item.fecha }}</td>
+                                        <td class="text-end">{{ money(item.debe) }}</td>
+                                        <td class="text-end">{{ money(item.haber) }}</td>
+                                        <td class="text-end">{{ item.fecha }}</td>
                                     </tr>
                                 {% else %}
                                     <tr class="table-warning">
