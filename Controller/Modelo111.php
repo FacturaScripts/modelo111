@@ -22,6 +22,8 @@ namespace FacturaScripts\Plugins\Modelo111\Controller;
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\DataSrc\Ejercicios;
+use FacturaScripts\Core\Tools;
+
 use FacturaScripts\Dinamic\Model\Asiento;
 use FacturaScripts\Dinamic\Model\CuentaEspecial;
 use FacturaScripts\Dinamic\Model\Ejercicio;
@@ -104,7 +106,7 @@ class Modelo111 extends Controller
         $this->period = $this->request->request->get('period', $this->period);
 
         $exercise = new Ejercicio();
-        $exercise->loadFromCode($this->codejercicio);
+        $exercise->load($this->codejercicio);
 
         switch ($this->period) {
             case 'T1':
@@ -145,9 +147,9 @@ class Modelo111 extends Controller
 
         $special = new CuentaEspecial();
         $where = [new DataBaseWhere('codcuentaesp', 'IRPFPR')];
-        if ($special->loadFromCode('', $where)) {
+        if ($special->loadWhere($where)) {
             foreach ($special->getCuenta($this->codejercicio)->getSubcuentas() as $subcuenta) {
-                $ids[$subcuenta->primaryColumnValue()] = $subcuenta->primaryColumnValue();
+                $ids[$subcuenta->id()] = $subcuenta->id();
             }
         }
 
@@ -161,8 +163,8 @@ class Modelo111 extends Controller
                 new DataBaseWhere('codejercicio', $this->codejercicio),
                 new DataBaseWhere('codsubcuenta', $retention->codsubcuentaacr)
             ];
-            if ($retention->codsubcuentaacr && $subcuenta->loadFromCode('', $whereAcr)) {
-                $ids[$subcuenta->primaryColumnValue()] = $subcuenta->primaryColumnValue();
+            if ($retention->codsubcuentaacr && $subcuenta->loadWhere($whereAcr)) {
+                $ids[$subcuenta->id()] = $subcuenta->id();
             }
 
             // subcuenta para ventas
@@ -170,8 +172,8 @@ class Modelo111 extends Controller
                 new DataBaseWhere('codejercicio', $this->codejercicio),
                 new DataBaseWhere('codsubcuenta', $retention->codsubcuentaret)
             ];
-            if ($retention->codsubcuentaret && $subcuenta->loadFromCode('', $whereRet)) {
-                $ids[$subcuenta->primaryColumnValue()] = $subcuenta->primaryColumnValue();
+            if ($retention->codsubcuentaret && $subcuenta->loadWhere($whereRet)) {
+                $ids[$subcuenta->id()] = $subcuenta->id();
             }
         }
         if (empty($ids)) {
