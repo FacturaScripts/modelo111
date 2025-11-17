@@ -12,7 +12,7 @@
                     <p>{{ trans('model-190-p') }}</p>
                 </div>
             </div>
-            <div class="row g-2 align-items-end">
+            <div class="row align-items-end">
                 <div class="col-sm-6 col-md-4 col-lg-3">
                     <div class="mb-3">
                         {{ trans('exercise') }}
@@ -50,6 +50,11 @@
                         <button type="submit" name="action" value="show" class="btn btn-primary">
                             <i class="fa-solid fa-eye me-1"></i> {{ trans('preview') }}
                         </button>
+                        {% if fsc.entryLines is not empty %}
+                            <button type="submit" name="action" value="download" class="btn btn-success ms-2">
+                                <i class="fa-solid fa-download me-1"></i> {{ trans('download-file') }}
+                            </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -62,12 +67,54 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col">
+                    <div class="col-sm-6 col-lg-3">
                         <div class="mb-3">
                             {{ trans('number-recipients') }}
                             <div class="input-group">
                                 <span class="input-group-text">01</span>
                                 <input type="number" value="{{ fsc.numrecipients }}" class="form-control text-end"
+                                       readonly/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="mb-3">
+                            {{ trans('withholding-base') }}
+                            <div class="input-group">
+                                <span class="input-group-text">02</span>
+                                <input type="text" value="{{ money(fsc.baseRetenciones) }}" class="form-control text-end"
+                                       readonly/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="mb-3">
+                            {{ trans('withholdings-made') }}
+                            <div class="input-group">
+                                <span class="input-group-text">03</span>
+                                <input type="text" value="{{ money(fsc.retencionesPracticadas) }}" class="form-control text-end"
+                                       readonly/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="mb-3">
+                            {{ trans('previous-period-income') }}
+                            <div class="input-group">
+                                <span class="input-group-text">04</span>
+                                <input type="number" name="ingresosanteriores" value="{{ fsc.ingresosPeriodoAnterior }}"
+                                       class="form-control text-end" step="0.01"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="mb-3">
+                            {{ trans('total-to-enter') }}
+                            <div class="input-group">
+                                <span class="input-group-text">05</span>
+                                <input type="text" value="{{ money(fsc.totalIngresar) }}" class="form-control text-end"
                                        readonly/>
                             </div>
                         </div>
@@ -102,7 +149,7 @@
                                         <td>{{ item.concepto | raw }}</td>
                                         <td class="text-end">{{ money(item.debe) }}</td>
                                         <td class="text-end">{{ money(item.haber) }}</td>
-                                        <td class="text-end">{{ item.fecha }}</td>
+                                        <td class="text-end">{{ item.fecha | date('d-m-Y') }}</td>
                                     </tr>
                                 {% else %}
                                     <tr class="table-warning">

@@ -25,6 +25,7 @@ use FacturaScripts\Core\DataSrc\Ejercicios;
 use FacturaScripts\Dinamic\Model\Asiento;
 use FacturaScripts\Dinamic\Model\CuentaEspecial;
 use FacturaScripts\Dinamic\Model\Ejercicio;
+use FacturaScripts\Dinamic\Model\Empresa;
 use FacturaScripts\Dinamic\Model\Partida;
 use FacturaScripts\Dinamic\Model\Retencion;
 use FacturaScripts\Dinamic\Model\Subcuenta;
@@ -48,11 +49,26 @@ class Modelo111 extends Controller
     /** @var Partida[] */
     public $entryLines = [];
 
+    /** @var Partida[] */
+    public $baseLines = [];
+
     /** @var int */
     public $numrecipients = 0;
 
     /** @var string */
     public $period = 'T1';
+
+    /** @var float */
+    public $baseRetenciones = 0.0;
+
+    /** @var float */
+    public $retencionesPracticadas = 0.0;
+
+    /** @var float */
+    public $ingresosPeriodoAnterior = 0.0;
+
+    /** @var float */
+    public $totalIngresar = 0.0;
 
     /** @return Ejercicio[] */
     public function allExercises(?int $idempresa): array
@@ -95,8 +111,16 @@ class Modelo111 extends Controller
         parent::privateCore($response, $user, $permissions);
 
         $this->loadDates();
+        $this->ingresosPeriodoAnterior = (float) $this->request->request->get('ingresosanteriores', 0);
         $this->loadEntryLines();
+        $this->loadBaseLines();
         $this->loadResults();
+
+        // Manejar la acción de descarga del archivo
+        $action = $this->request->request->get('action', '');
+        if ($action === 'download') {
+            $this->downloadFile($response);
+        }
     }
 
     protected function loadDates(): void
@@ -190,13 +214,241 @@ class Modelo111 extends Controller
         }
     }
 
+    protected function loadBaseLines(): void
+    {
+        if (empty($this->codejercicio) || empty($this->entryLines)) {
+            return;
+        }
+
+        // obtenemos los asientos únicos de las retenciones
+        $asientos = [];
+        foreach ($this->entryLines as $line) {
+            $asientos[$line->idasiento] = $line->idasiento;
+        }
+
+        if (empty($asientos)) {
+            return;
+        }
+
+        // obtenemos las subcuentas de sueldos y salarios (640)
+        $subcuenta = new Subcuenta();
+        $where = [
+            new DataBaseWhere('codejercicio', $this->codejercicio),
+            new DataBaseWhere('codsubcuenta', '640', 'LIKE')
+        ];
+        $ids = [];
+        foreach ($subcuenta->all($where) as $sub) {
+            $ids[$sub->id()] = $sub->id();
+        }
+
+        if (empty($ids)) {
+            return;
+        }
+
+        // buscamos las partidas de gastos de personal que estén en los mismos asientos que las retenciones
+        $sql = 'SELECT * FROM ' . Partida::tableName() . ' as p'
+            . ' WHERE p.idasiento IN (' . implode(',', $asientos) . ')'
+            . ' AND p.idsubcuenta IN (' . implode(',', $ids) . ')';
+
+        foreach ($this->dataBase->select($sql) as $row) {
+            $this->baseLines[] = new Partida($row);
+        }
+    }
+
     protected function loadResults(): void
     {
         $recipients = [];
+        $this->baseRetenciones = 0.0;
+        $this->retencionesPracticadas = 0.0;
+
+        // calculamos las retenciones practicadas (casilla 03) y los perceptores
         foreach ($this->entryLines as $line) {
             $recipients[$line->codcontrapartida] = $line->codcontrapartida;
+            $this->retencionesPracticadas += $line->haber;
+        }
+
+        // calculamos la base de retenciones (casilla 02)
+        foreach ($this->baseLines as $line) {
+            $this->baseRetenciones += $line->debe;
         }
 
         $this->numrecipients = count($recipients);
+
+        // calculamos el total a ingresar (casilla 05)
+        $this->totalIngresar = $this->retencionesPracticadas + $this->ingresosPeriodoAnterior;
+    }
+
+    protected function downloadFile(&$response): void
+    {
+        if (empty($this->codejercicio)) {
+            $this->toolBox()->i18nLog()->warning('no-exercise-selected');
+            return;
+        }
+
+        // Obtener datos de la empresa
+        $ejercicio = new Ejercicio();
+        if (!$ejercicio->loadFromCode($this->codejercicio)) {
+            $this->toolBox()->i18nLog()->error('exercise-not-found');
+            return;
+        }
+
+        $empresa = new Empresa();
+        if (!$empresa->loadFromCode($ejercicio->idempresa)) {
+            $this->toolBox()->i18nLog()->error('company-not-found');
+            return;
+        }
+
+        // Generar el contenido del archivo
+        $content = $this->generateFileContent($empresa, $ejercicio);
+
+        // Configurar headers para descarga
+        $year = date('Y', strtotime($ejercicio->fechainicio));
+        $periodo = $this->getPeriodNumber();
+        $filename = $empresa->cifnif . '_' . $year . '_' . $periodo . '.111';
+
+        $response->headers->set('Content-Type', 'text/plain; charset=ISO-8859-1');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->setContent(mb_convert_encoding($content, 'ISO-8859-1', 'UTF-8'));
+        $response->send();
+        exit;
+    }
+
+    protected function generateFileContent(Empresa $empresa, Ejercicio $ejercicio): string
+    {
+        $lines = [];
+        $year = date('Y', strtotime($ejercicio->fechainicio));
+        $periodo = $this->getPeriodNumber();
+
+        // Registro tipo 1: Declarante
+        $lines[] = $this->generateRecord1($empresa, $year, $periodo);
+
+        // Registro tipo 2: Totales
+        $lines[] = $this->generateRecord2($empresa, $year, $periodo);
+
+        return implode("\r\n", $lines) . "\r\n";
+    }
+
+    protected function generateRecord1(Empresa $empresa, string $year, string $periodo): string
+    {
+        // Tipo de registro: 1
+        $record = '1';
+
+        // Modelo: 111
+        $record .= '111';
+
+        // Ejercicio (4 dígitos)
+        $record .= $year;
+
+        // NIF del declarante (9 caracteres, alineado a la izquierda)
+        $record .= $this->formatAlphanumeric($empresa->cifnif, 9);
+
+        // Nombre o razón social del declarante (40 caracteres)
+        $record .= $this->formatAlphanumeric($empresa->nombre, 40);
+
+        // Tipo de soporte: 'T' (telemático)
+        $record .= 'T';
+
+        // Teléfono (9 caracteres)
+        $record .= $this->formatAlphanumeric($empresa->telefono1, 9);
+
+        // Persona de contacto (40 caracteres)
+        $record .= $this->formatAlphanumeric($empresa->administrador, 40);
+
+        // Número de identificación fiscal del representante legal (9 caracteres, espacios si no aplica)
+        $record .= str_repeat(' ', 9);
+
+        // Período: dos dígitos (01, 02, 03, 04, 0A para anual)
+        $record .= $periodo;
+
+        // Espacios de relleno hasta completar 252 caracteres
+        $record .= str_repeat(' ', 252 - strlen($record));
+
+        return $record;
+    }
+
+    protected function generateRecord2(Empresa $empresa, string $year, string $periodo): string
+    {
+        // Tipo de registro: 2
+        $record = '2';
+
+        // Modelo: 111
+        $record .= '111';
+
+        // Ejercicio (4 dígitos)
+        $record .= $year;
+
+        // NIF del declarante (9 caracteres)
+        $record .= $this->formatAlphanumeric($empresa->cifnif, 9);
+
+        // Período: dos dígitos
+        $record .= $periodo;
+
+        // Subclave: Clave A - Rendimientos del trabajo (2 caracteres)
+        $record .= '01';
+
+        // Número de perceptores (9 dígitos, sin decimales)
+        $record .= $this->formatNumeric($this->numrecipients, 9, 0);
+
+        // Base de retenciones (15 enteros + 2 decimales = 17 caracteres)
+        $record .= $this->formatNumeric($this->baseRetenciones, 17, 2);
+
+        // Retenciones practicadas (15 enteros + 2 decimales = 17 caracteres)
+        $record .= $this->formatNumeric($this->retencionesPracticadas, 17, 2);
+
+        // Ingresos del período anterior (15 enteros + 2 decimales = 17 caracteres)
+        $record .= $this->formatNumeric($this->ingresosPeriodoAnterior, 17, 2);
+
+        // Espacios de relleno hasta completar 252 caracteres
+        $record .= str_repeat(' ', 252 - strlen($record));
+
+        return $record;
+    }
+
+    protected function formatAlphanumeric(string $value, int $length): string
+    {
+        // Eliminar caracteres especiales y acentos
+        $value = $this->removeAccents($value);
+        $value = strtoupper($value);
+
+        // Truncar o rellenar con espacios a la derecha
+        return str_pad(substr($value, 0, $length), $length, ' ', STR_PAD_RIGHT);
+    }
+
+    protected function formatNumeric(float $value, int $length, int $decimals): string
+    {
+        // Convertir a entero sin decimales (multiplicando por 10^decimales)
+        $multiplier = pow(10, $decimals);
+        $intValue = (int) round($value * $multiplier);
+
+        // Formatear con ceros a la izquierda
+        return str_pad($intValue, $length, '0', STR_PAD_LEFT);
+    }
+
+    protected function removeAccents(string $text): string
+    {
+        $unwanted = [
+            'á' => 'A', 'é' => 'E', 'í' => 'I', 'ó' => 'O', 'ú' => 'U',
+            'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U',
+            'ñ' => 'N', 'Ñ' => 'N', 'ü' => 'U', 'Ü' => 'U'
+        ];
+        return strtr($text, $unwanted);
+    }
+
+    protected function getPeriodNumber(): string
+    {
+        switch ($this->period) {
+            case 'T1':
+                return '1T';
+            case 'T2':
+                return '2T';
+            case 'T3':
+                return '3T';
+            case 'T4':
+                return '4T';
+            case 'Annual':
+                return '0A';
+            default:
+                return '1T';
+        }
     }
 }
