@@ -4,5 +4,11 @@
     "model-111-190": "111 eta 190 ereduak",
     "model-111-p": "111 eredua langileei, profesionalei eta enpresariei egindako PFEZaren gaineko atxikipenen hiruhileko aitorpena da.",
     "model-190": "Modelo 190",
-    "model-190-p": "190. eredua IRPF-ren kasuetan konturaturiko kutxak adinaren arabera errazten ditu."
+    "model-190-p": "190. eredua IRPF-ren kasuetan konturaturiko kutxak adinaren arabera errazten ditu.",
+    "previous-period-income": "Ingresos del periodo anterior",
+    "recipient": "Perceptor",
+    "recipients-detail": "Perceptores",
+    "total-to-enter": "Total a ingresar",
+    "withholding-base": "Base de retenciones",
+    "withholdings-made": "Retenciones practicadas"
 }

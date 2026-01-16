@@ -4,5 +4,11 @@
     "model-111-190": "Model 111 a 190",
     "model-111-p": "El Modelo 111 es una declaración trimestral de las retenciones del IRPF practicadas a trabajadores, profesionales y empresarios.",
     "model-190": "Model 190",
-    "model-190-p": "Formulář 190 je každoroční hlášení o zdanění příjmů z práce, profesních a podnikatelských výkonů."
+    "model-190-p": "Formulář 190 je každoroční hlášení o zdanění příjmů z práce, profesních a podnikatelských výkonů.",
+    "previous-period-income": "Ingresos del periodo anterior",
+    "recipient": "Perceptor",
+    "recipients-detail": "Perceptores",
+    "total-to-enter": "Total a ingresar",
+    "withholding-base": "Base de retenciones",
+    "withholdings-made": "Retenciones practicadas"
 }

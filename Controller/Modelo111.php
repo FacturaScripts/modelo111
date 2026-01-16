@@ -70,6 +70,9 @@ class Modelo111 extends Controller
     /** @var float */
     public $totalIngresar = 0.0;
 
+    /** @var array */
+    public $recipientDetails = [];
+
     /** @return Ejercicio[] */
     public function allExercises(?int $idempresa): array
     {
@@ -260,22 +263,72 @@ class Modelo111 extends Controller
         $recipients = [];
         $this->baseRetenciones = 0.0;
         $this->retencionesPracticadas = 0.0;
+        $this->recipientDetails = [];
 
         // calculamos las retenciones practicadas (casilla 03) y los perceptores
         foreach ($this->entryLines as $line) {
-            $recipients[$line->codcontrapartida] = $line->codcontrapartida;
+            $codcontrapartida = $line->codcontrapartida;
+            $recipients[$codcontrapartida] = $codcontrapartida;
             $this->retencionesPracticadas += $line->haber;
+
+            // agrupar por perceptor
+            if (!isset($this->recipientDetails[$codcontrapartida])) {
+                // buscar la subcuenta de la contrapartida para obtener su descripción
+                $subcuenta = new Subcuenta();
+                $whereSubcuenta = [
+                    new DataBaseWhere('codejercicio', $this->codejercicio),
+                    new DataBaseWhere('codsubcuenta', $codcontrapartida)
+                ];
+                $descripcion = '';
+                if ($subcuenta->loadWhere($whereSubcuenta)) {
+                    $descripcion = $subcuenta->descripcion;
+                }
+
+                $this->recipientDetails[$codcontrapartida] = [
+                    'codcontrapartida' => $codcontrapartida,
+                    'descripcion' => $descripcion,
+                    'base' => 0.0,
+                    'retencion' => 0.0
+                ];
+            }
+            $this->recipientDetails[$codcontrapartida]['retencion'] += $line->haber;
         }
 
-        // calculamos la base de retenciones (casilla 02)
+        // calculamos la base de retenciones (casilla 02) y la agrupamos por perceptor
         foreach ($this->baseLines as $line) {
+            $codcontrapartida = $line->codcontrapartida;
             $this->baseRetenciones += $line->debe;
+
+            // agrupar por perceptor
+            if (!isset($this->recipientDetails[$codcontrapartida])) {
+                // buscar la subcuenta de la contrapartida para obtener su descripción
+                $subcuenta = new Subcuenta();
+                $whereSubcuenta = [
+                    new DataBaseWhere('codejercicio', $this->codejercicio),
+                    new DataBaseWhere('codsubcuenta', $codcontrapartida)
+                ];
+                $descripcion = '';
+                if ($subcuenta->loadWhere($whereSubcuenta)) {
+                    $descripcion = $subcuenta->descripcion;
+                }
+
+                $this->recipientDetails[$codcontrapartida] = [
+                    'codcontrapartida' => $codcontrapartida,
+                    'descripcion' => $descripcion,
+                    'base' => 0.0,
+                    'retencion' => 0.0
+                ];
+            }
+            $this->recipientDetails[$codcontrapartida]['base'] += $line->debe;
         }
 
         $this->numrecipients = count($recipients);
 
         // calculamos el total a ingresar (casilla 05)
         $this->totalIngresar = $this->retencionesPracticadas + $this->ingresosPeriodoAnterior;
+
+        // ordenar por código de contrapartida
+        ksort($this->recipientDetails);
     }
 
     protected function downloadFile(&$response): void

@@ -6,7 +6,7 @@
             <div class="row">
                 <div class="col">
                     <h1 class="h2">
-                        <i class="fa-solid fa-book fa-fw"></i> {{ trans(fsc.title) }}
+                        <i class="fa-solid fa-book fa-fw"></i> {{ fsc.title }}
                     </h1>
                     <p class="mb-0">{{ trans('model-111-p') }}</p>
                     <p>{{ trans('model-190-p') }}</p>
@@ -52,7 +52,7 @@
                         </button>
                         {% if fsc.entryLines is not empty %}
                             <button type="submit" name="action" value="download" class="btn btn-success ms-2">
-                                <i class="fa-solid fa-download me-1"></i> {{ trans('download-file') }}
+                                <i class="fa-solid fa-download me-1"></i> {{ trans('download') }}
                             </button>
                         {% endif %}
                     </div>
@@ -61,103 +61,162 @@
             {% if fsc.entryLines is not empty %}
                 <div class="row">
                     <div class="col">
-                        <h2 class="h3 mt-3">
-                            <i class="fa-regular fa-clipboard fa-fw"></i> {{ trans('summary') }}
-                        </h2>
+                        <div class="card shadow-sm mt-3">
+                            <div class="card-header">
+                                <h2 class="h5 mb-0">
+                                    <i class="fa-regular fa-clipboard fa-fw"></i> {{ trans('summary') }}
+                                </h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-6 col-lg-3">
+                                        <div class="mb-3">
+                                            {{ trans('number-recipients') }}
+                                            <div class="input-group">
+                                                <span class="input-group-text">01</span>
+                                                <input type="number" value="{{ fsc.numrecipients }}" class="form-control text-end"
+                                                       readonly/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6 col-lg-3">
+                                        <div class="mb-3">
+                                            {{ trans('withholding-base') }}
+                                            <div class="input-group">
+                                                <span class="input-group-text">02</span>
+                                                <input type="text" value="{{ money(fsc.baseRetenciones) }}" class="form-control text-end"
+                                                       readonly/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6 col-lg-3">
+                                        <div class="mb-3">
+                                            {{ trans('withholdings-made') }}
+                                            <div class="input-group">
+                                                <span class="input-group-text">03</span>
+                                                <input type="text" value="{{ money(fsc.retencionesPracticadas) }}" class="form-control text-end"
+                                                       readonly/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-6 col-lg-3">
+                                        <div class="mb-3">
+                                            {{ trans('previous-period-income') }}
+                                            <div class="input-group">
+                                                <span class="input-group-text">04</span>
+                                                <input type="number" name="ingresosanteriores" value="{{ fsc.ingresosPeriodoAnterior }}"
+                                                       class="form-control text-end" step="0.01"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6 col-lg-3">
+                                        <div class="mb-3">
+                                            {{ trans('total-to-enter') }}
+                                            <div class="input-group">
+                                                <span class="input-group-text">05</span>
+                                                <input type="text" value="{{ money(fsc.totalIngresar) }}" class="form-control text-end"
+                                                       readonly/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-sm-6 col-lg-3">
-                        <div class="mb-3">
-                            {{ trans('number-recipients') }}
-                            <div class="input-group">
-                                <span class="input-group-text">01</span>
-                                <input type="number" value="{{ fsc.numrecipients }}" class="form-control text-end"
-                                       readonly/>
+                {% if fsc.recipientDetails is not empty %}
+                    <div class="row">
+                        <div class="col">
+                            <div class="card shadow-sm mt-3">
+                                <div class="card-header">
+                                    <h3 class="h5 mb-0">
+                                        <i class="fa-solid fa-users fa-fw"></i> {{ trans('recipients-detail') }}
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0">
+                                            <thead>
+                                            <tr>
+                                                <th>{{ trans('recipient') }}</th>
+                                                <th class="text-end">{{ trans('withholding-base') }}</th>
+                                                <th class="text-end">{{ trans('withholdings-made') }}</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for detail in fsc.recipientDetails %}
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ detail.codcontrapartida }}</strong>
+                                                        {% if detail.descripcion %}
+                                                            <small class="text-muted">{{ detail.descripcion }}</small>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-end">{{ money(detail.base) }}</td>
+                                                    <td class="text-end">{{ money(detail.retencion) }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                            <tfoot>
+                                            <tr class="table-active fw-bold">
+                                                <td>{{ trans('total') }}</td>
+                                                <td class="text-end">{{ money(fsc.baseRetenciones) }}</td>
+                                                <td class="text-end">{{ money(fsc.retencionesPracticadas) }}</td>
+                                            </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6 col-lg-3">
-                        <div class="mb-3">
-                            {{ trans('withholding-base') }}
-                            <div class="input-group">
-                                <span class="input-group-text">02</span>
-                                <input type="text" value="{{ money(fsc.baseRetenciones) }}" class="form-control text-end"
-                                       readonly/>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-lg-3">
-                        <div class="mb-3">
-                            {{ trans('withholdings-made') }}
-                            <div class="input-group">
-                                <span class="input-group-text">03</span>
-                                <input type="text" value="{{ money(fsc.retencionesPracticadas) }}" class="form-control text-end"
-                                       readonly/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-sm-6 col-lg-3">
-                        <div class="mb-3">
-                            {{ trans('previous-period-income') }}
-                            <div class="input-group">
-                                <span class="input-group-text">04</span>
-                                <input type="number" name="ingresosanteriores" value="{{ fsc.ingresosPeriodoAnterior }}"
-                                       class="form-control text-end" step="0.01"/>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6 col-lg-3">
-                        <div class="mb-3">
-                            {{ trans('total-to-enter') }}
-                            <div class="input-group">
-                                <span class="input-group-text">05</span>
-                                <input type="text" value="{{ money(fsc.totalIngresar) }}" class="form-control text-end"
-                                       readonly/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {% endif %}
                 <div class="row">
                     <div class="col">
-                        <h3 class="h4 mt-3">
-                            <i class="fa-regular fa-copy fa-fw"></i> {{ trans('accounting-entries') }}
-                        </h3>
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                <tr>
-                                    <th>{{ trans('accounting-entry') }}</th>
-                                    <th>{{ trans('subaccount') }}</th>
-                                    <th>{{ trans('counterpart') }}</th>
-                                    <th>{{ trans('concept') }}</th>
-                                    <th class="text-end">{{ trans('debit') }}</th>
-                                    <th class="text-end">{{ trans('credit') }}</th>
-                                    <th class="text-end">{{ trans('date') }}</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for item in fsc.entryLines %}
-                                    <tr>
-                                        <td>
-                                            <a href="{{ item.url() }}">{{ item.numero }}</a>
-                                        </td>
-                                        <td>{{ item.codsubcuenta }}</td>
-                                        <td>{{ item.codcontrapartida }}</td>
-                                        <td>{{ item.concepto | raw }}</td>
-                                        <td class="text-end">{{ money(item.debe) }}</td>
-                                        <td class="text-end">{{ money(item.haber) }}</td>
-                                        <td class="text-end">{{ item.fecha | date('d-m-Y') }}</td>
-                                    </tr>
-                                {% else %}
-                                    <tr class="table-warning">
-                                        <td colspan="8">{{ trans('no-data') }}</td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
+                        <div class="card shadow-sm mt-3">
+                            <div class="card-header">
+                                <h3 class="h5 mb-0">
+                                    <i class="fa-regular fa-copy fa-fw"></i> {{ trans('accounting-entries') }}
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                        <tr>
+                                            <th>{{ trans('accounting-entry') }}</th>
+                                            <th>{{ trans('subaccount') }}</th>
+                                            <th>{{ trans('counterpart') }}</th>
+                                            <th>{{ trans('concept') }}</th>
+                                            <th class="text-end">{{ trans('debit') }}</th>
+                                            <th class="text-end">{{ trans('credit') }}</th>
+                                            <th class="text-end">{{ trans('date') }}</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for item in fsc.entryLines %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{{ item.url() }}">{{ item.numero }}</a>
+                                                </td>
+                                                <td>{{ item.codsubcuenta }}</td>
+                                                <td>{{ item.codcontrapartida }}</td>
+                                                <td>{{ item.concepto | raw }}</td>
+                                                <td class="text-end">{{ money(item.debe) }}</td>
+                                                <td class="text-end">{{ money(item.haber) }}</td>
+                                                <td class="text-end">{{ item.fecha | date('d-m-Y') }}</td>
+                                            </tr>
+                                        {% else %}
+                                            <tr class="table-warning">
+                                                <td colspan="7">{{ trans('no-data') }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

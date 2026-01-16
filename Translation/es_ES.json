@@ -1,12 +1,13 @@
 {
     "annual-190": "Anual (Modelo 190)",
-    "download-file": "Descargar archivo",
     "model-111": "Modelo 111",
     "model-111-190": "Modelo 111 y 190",
     "model-111-p": "El Modelo 111 es una declaración trimestral de las retenciones del IRPF practicadas a trabajadores, profesionales y empresarios.",
     "model-190": "Modelo 190",
     "model-190-p": "El Modelo 190 es una declaración anual de las retenciones del IRPF practicadas a trabajadores, profesionales y empresarios.",
-    "previous-period-income": "Ingresos del período anterior",
+    "previous-period-income": "Ingresos del periodo anterior",
+    "recipient": "Perceptor",
+    "recipients-detail": "Perceptores",
     "total-to-enter": "Total a ingresar",
     "withholding-base": "Base de retenciones",
     "withholdings-made": "Retenciones practicadas"

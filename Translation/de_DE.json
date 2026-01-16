@@ -4,5 +4,11 @@
     "model-111-190": "Model 111 und 190",
     "model-111-p": "Das Formular 111 ist eine vierteljährliche Erklärung der von Arbeitnehmern, Fachleuten und Unternehmern einbehaltenen Einkommenssteuer.",
     "model-190": "Modell 190",
-    "model-190-p": "Das Modell 190 ist eine jährliche Erklärung der von der IRPF an Arbeitnehmer, Experten und Unternehmer vorgenommenen Abzüge."
+    "model-190-p": "Das Modell 190 ist eine jährliche Erklärung der von der IRPF an Arbeitnehmer, Experten und Unternehmer vorgenommenen Abzüge.",
+    "previous-period-income": "Ingresos del periodo anterior",
+    "recipient": "Perceptor",
+    "recipients-detail": "Perceptores",
+    "total-to-enter": "Total a ingresar",
+    "withholding-base": "Base de retenciones",
+    "withholdings-made": "Retenciones practicadas"
 }

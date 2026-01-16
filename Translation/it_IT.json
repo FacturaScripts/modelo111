@@ -4,5 +4,11 @@
     "model-111-190": "Modello 111 e 190",
     "model-111-p": "Il Modello 111 è una dichiarazione trimestrale delle ritenute IRPF applicate ai lavoratori, professionisti ed imprenditori.",
     "model-190": "Modello 190",
-    "model-190-p": "Il Modello 190 è una dichiarazione annuale delle ritenute IRPF applicate a lavoratori, professionisti e imprenditori."
+    "model-190-p": "Il Modello 190 è una dichiarazione annuale delle ritenute IRPF applicate a lavoratori, professionisti e imprenditori.",
+    "previous-period-income": "Ingresos del periodo anterior",
+    "recipient": "Perceptor",
+    "recipients-detail": "Perceptores",
+    "total-to-enter": "Total a ingresar",
+    "withholding-base": "Base de retenciones",
+    "withholdings-made": "Retenciones practicadas"
 }
