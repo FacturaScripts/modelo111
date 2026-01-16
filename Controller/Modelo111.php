@@ -1,7 +1,7 @@
 <?php
 /**
  * This file is part of Modelo111 plugin for FacturaScripts
- * Copyright (C) 2020-2025 Carlos Garcia Gomez <carlos@facturascripts.com>
+ * Copyright (C) 2020-2026 Carlos Garcia Gomez <carlos@facturascripts.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -22,6 +22,7 @@ namespace FacturaScripts\Plugins\Modelo111\Controller;
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\DataSrc\Ejercicios;
+use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Model\Asiento;
 use FacturaScripts\Dinamic\Model\CuentaEspecial;
 use FacturaScripts\Dinamic\Model\Ejercicio;
@@ -114,7 +115,7 @@ class Modelo111 extends Controller
         parent::privateCore($response, $user, $permissions);
 
         $this->loadDates();
-        $this->ingresosPeriodoAnterior = (float) $this->request->request->get('ingresosanteriores', 0);
+        $this->ingresosPeriodoAnterior = (float)$this->request->request->get('ingresosanteriores', 0);
         $this->loadEntryLines();
         $this->loadBaseLines();
         $this->loadResults();
@@ -265,60 +266,40 @@ class Modelo111 extends Controller
         $this->retencionesPracticadas = 0.0;
         $this->recipientDetails = [];
 
+        // obtener bases imponibles de los asientos con retenciones
+        $basesByAsiento = $this->loadBasesByAsiento();
+
         // calculamos las retenciones practicadas (casilla 03) y los perceptores
         foreach ($this->entryLines as $line) {
             $codcontrapartida = $line->codcontrapartida;
             $recipients[$codcontrapartida] = $codcontrapartida;
             $this->retencionesPracticadas += $line->haber;
 
-            // agrupar por perceptor
-            if (!isset($this->recipientDetails[$codcontrapartida])) {
-                // buscar la subcuenta de la contrapartida para obtener su descripción
-                $subcuenta = new Subcuenta();
-                $whereSubcuenta = [
-                    new DataBaseWhere('codejercicio', $this->codejercicio),
-                    new DataBaseWhere('codsubcuenta', $codcontrapartida)
-                ];
-                $descripcion = '';
-                if ($subcuenta->loadWhere($whereSubcuenta)) {
-                    $descripcion = $subcuenta->descripcion;
-                }
+            // inicializar perceptor si no existe
+            $this->initRecipient($codcontrapartida);
 
-                $this->recipientDetails[$codcontrapartida] = [
-                    'codcontrapartida' => $codcontrapartida,
-                    'descripcion' => $descripcion,
-                    'base' => 0.0,
-                    'retencion' => 0.0
-                ];
-            }
+            // sumar retención
             $this->recipientDetails[$codcontrapartida]['retencion'] += $line->haber;
+
+            // sumar base imponible del asiento completo (puede estar en cualquier partida del asiento)
+            if (isset($basesByAsiento[$line->idasiento]) && $basesByAsiento[$line->idasiento] > 0) {
+                $baseImponible = $basesByAsiento[$line->idasiento];
+                $this->baseRetenciones += $baseImponible;
+                $this->recipientDetails[$codcontrapartida]['base'] += $baseImponible;
+                // marcar como procesado para no duplicar si hay múltiples retenciones en el mismo asiento
+                $basesByAsiento[$line->idasiento] = 0;
+            }
         }
 
-        // calculamos la base de retenciones (casilla 02) y la agrupamos por perceptor
+        // calculamos la base de retenciones de sueldos y salarios (casilla 02) y la agrupamos por perceptor
         foreach ($this->baseLines as $line) {
             $codcontrapartida = $line->codcontrapartida;
             $this->baseRetenciones += $line->debe;
 
-            // agrupar por perceptor
-            if (!isset($this->recipientDetails[$codcontrapartida])) {
-                // buscar la subcuenta de la contrapartida para obtener su descripción
-                $subcuenta = new Subcuenta();
-                $whereSubcuenta = [
-                    new DataBaseWhere('codejercicio', $this->codejercicio),
-                    new DataBaseWhere('codsubcuenta', $codcontrapartida)
-                ];
-                $descripcion = '';
-                if ($subcuenta->loadWhere($whereSubcuenta)) {
-                    $descripcion = $subcuenta->descripcion;
-                }
+            // inicializar perceptor si no existe
+            $this->initRecipient($codcontrapartida);
 
-                $this->recipientDetails[$codcontrapartida] = [
-                    'codcontrapartida' => $codcontrapartida,
-                    'descripcion' => $descripcion,
-                    'base' => 0.0,
-                    'retencion' => 0.0
-                ];
-            }
+            // sumar base de sueldos
             $this->recipientDetails[$codcontrapartida]['base'] += $line->debe;
         }
 
@@ -331,23 +312,72 @@ class Modelo111 extends Controller
         ksort($this->recipientDetails);
     }
 
+    protected function loadBasesByAsiento(): array
+    {
+        if (empty($this->entryLines)) {
+            return [];
+        }
+
+        // obtener IDs únicos de asientos con retenciones
+        $asientosIds = [];
+        foreach ($this->entryLines as $line) {
+            $asientosIds[$line->idasiento] = $line->idasiento;
+        }
+
+        // cargar bases imponibles de todos los asientos con retenciones
+        $basesByAsiento = [];
+        $sql = 'SELECT idasiento, SUM(baseimponible) as total_base FROM ' . Partida::tableName()
+            . ' WHERE idasiento IN (' . implode(',', $asientosIds) . ')'
+            . ' GROUP BY idasiento';
+        foreach ($this->dataBase->select($sql) as $row) {
+            $basesByAsiento[$row['idasiento']] = (float)$row['total_base'];
+        }
+
+        return $basesByAsiento;
+    }
+
+    protected function initRecipient(string $codcontrapartida): void
+    {
+        if (isset($this->recipientDetails[$codcontrapartida])) {
+            return;
+        }
+
+        // buscar la subcuenta de la contrapartida para obtener su descripción
+        $subcuenta = new Subcuenta();
+        $whereSubcuenta = [
+            new DataBaseWhere('codejercicio', $this->codejercicio),
+            new DataBaseWhere('codsubcuenta', $codcontrapartida)
+        ];
+        $descripcion = '';
+        if ($subcuenta->loadWhere($whereSubcuenta)) {
+            $descripcion = $subcuenta->descripcion;
+        }
+
+        $this->recipientDetails[$codcontrapartida] = [
+            'codcontrapartida' => $codcontrapartida,
+            'descripcion' => $descripcion,
+            'base' => 0.0,
+            'retencion' => 0.0
+        ];
+    }
+
     protected function downloadFile(&$response): void
     {
         if (empty($this->codejercicio)) {
-            $this->toolBox()->i18nLog()->warning('no-exercise-selected');
+            Tools::log()->warning('no-exercise-selected');
             return;
         }
 
         // Obtener datos de la empresa
         $ejercicio = new Ejercicio();
-        if (!$ejercicio->loadFromCode($this->codejercicio)) {
-            $this->toolBox()->i18nLog()->error('exercise-not-found');
+        if (!$ejercicio->load($this->codejercicio)) {
+            Tools::log()->error('exercise-not-found');
             return;
         }
 
         $empresa = new Empresa();
-        if (!$empresa->loadFromCode($ejercicio->idempresa)) {
-            $this->toolBox()->i18nLog()->error('company-not-found');
+        if (!$empresa->load($ejercicio->idempresa)) {
+            Tools::log()->error('company-not-found');
             return;
         }
 
@@ -471,7 +501,7 @@ class Modelo111 extends Controller
     {
         // Convertir a entero sin decimales (multiplicando por 10^decimales)
         $multiplier = pow(10, $decimals);
-        $intValue = (int) round($value * $multiplier);
+        $intValue = (int)round($value * $multiplier);
 
         // Formatear con ceros a la izquierda
         return str_pad($intValue, $length, '0', STR_PAD_LEFT);
