@@ -275,6 +275,11 @@ class Modelo111 extends Controller
             $recipients[$codcontrapartida] = $codcontrapartida;
             $this->retencionesPracticadas += $line->haber;
 
+            // si no existe la contrapartida saltar
+            if (empty($codcontrapartida)) {
+                continue;
+            }
+
             // inicializar perceptor si no existe
             $this->initRecipient($codcontrapartida);
 
@@ -295,6 +300,11 @@ class Modelo111 extends Controller
         foreach ($this->baseLines as $line) {
             $codcontrapartida = $line->codcontrapartida;
             $this->baseRetenciones += $line->debe;
+
+            // si no existe la contrapartida saltar
+            if (empty($codcontrapartida)) {
+                continue;
+            }
 
             // inicializar perceptor si no existe
             $this->initRecipient($codcontrapartida);
