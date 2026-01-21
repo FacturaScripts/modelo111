@@ -272,13 +272,12 @@ class Modelo111 extends Controller
         // calculamos las retenciones practicadas (casilla 03) y los perceptores
         foreach ($this->entryLines as $line) {
             $codcontrapartida = $line->codcontrapartida;
-            $recipients[$codcontrapartida] = $codcontrapartida;
-            $this->retencionesPracticadas += $line->haber;
-
-            // si no existe la contrapartida saltar
             if (empty($codcontrapartida)) {
                 continue;
             }
+
+            $recipients[$codcontrapartida] = $codcontrapartida;
+            $this->retencionesPracticadas += $line->haber;
 
             // inicializar perceptor si no existe
             $this->initRecipient($codcontrapartida);
@@ -299,12 +298,11 @@ class Modelo111 extends Controller
         // calculamos la base de retenciones de sueldos y salarios (casilla 02) y la agrupamos por perceptor
         foreach ($this->baseLines as $line) {
             $codcontrapartida = $line->codcontrapartida;
-            $this->baseRetenciones += $line->debe;
-
-            // si no existe la contrapartida saltar
             if (empty($codcontrapartida)) {
                 continue;
             }
+
+            $this->baseRetenciones += $line->debe;
 
             // inicializar perceptor si no existe
             $this->initRecipient($codcontrapartida);
@@ -529,19 +527,13 @@ class Modelo111 extends Controller
 
     protected function getPeriodNumber(): string
     {
-        switch ($this->period) {
-            case 'T1':
-                return '1T';
-            case 'T2':
-                return '2T';
-            case 'T3':
-                return '3T';
-            case 'T4':
-                return '4T';
-            case 'Annual':
-                return '0A';
-            default:
-                return '1T';
-        }
+        return match ($this->period) {
+            'T1' => '1T',
+            'T2' => '2T',
+            'T3' => '3T',
+            'T4' => '4T',
+            'Annual' => '0A',
+            default => '1T',
+        };
     }
 }

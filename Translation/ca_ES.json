@@ -5,10 +5,10 @@
     "model-111-p": "El Model 111 és una declaració trimestral de les retencions de l'IRPF practicades a treballadors, professionals i empresaris.",
     "model-190": "Model 190",
     "model-190-p": "El Model 190 és una declaració anual de les retencions de l'IRPF practicades a treballadors, professionals i empresaris.",
-    "previous-period-income": "Ingresos del periodo anterior",
+    "previous-period-income": "Ingressos del període anterior",
     "recipient": "Perceptor",
-    "recipients-detail": "Perceptores",
-    "total-to-enter": "Total a ingresar",
-    "withholding-base": "Base de retenciones",
-    "withholdings-made": "Retenciones practicadas"
+    "recipients-detail": "Perceptors",
+    "total-to-enter": "Total a ingressar",
+    "withholding-base": "Base de retencions",
+    "withholdings-made": "Retencions practicades"
 }
