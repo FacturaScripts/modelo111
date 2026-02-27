@@ -1,14 +1,14 @@
 {
     "annual-190": "Jährlich (Model 190)",
     "model-111": "Modell 111",
-    "model-111-190": "Model 111 und 190",
+    "model-111-190": "Modelle 111 und 190",
     "model-111-p": "Das Formular 111 ist eine vierteljährliche Erklärung der von Arbeitnehmern, Fachleuten und Unternehmern einbehaltenen Einkommenssteuer.",
     "model-190": "Modell 190",
     "model-190-p": "Das Modell 190 ist eine jährliche Erklärung der von der IRPF an Arbeitnehmer, Experten und Unternehmer vorgenommenen Abzüge.",
-    "previous-period-income": "Ingresos del periodo anterior",
-    "recipient": "Perceptor",
+    "previous-period-income": "Einnahmen des vorherigen Zeitraums",
+    "recipient": "Empfänger",
     "recipients-detail": "Empfänger",
-    "total-to-enter": "Total a ingresar",
-    "withholding-base": "Base de retenciones",
-    "withholdings-made": "Retenciones practicadas"
+    "total-to-enter": "Einzugebender Gesamtbetrag",
+    "withholding-base": "Bemessungsgrundlage für Einbehalte",
+    "withholdings-made": "Vorgenommene Einbehalte"
 }

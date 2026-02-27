@@ -5,10 +5,10 @@
     "model-111-p": "Form 111 is a quarterly statement of the personal income tax withholdings made to workers, professionals and businessmen.",
     "model-190": "Form 190",
     "model-190-p": "Form 190 is an annual statement of the income tax withheld from employees, professionals, and entrepreneurs.",
-    "previous-period-income": "Ingresos del periodo anterior",
-    "recipient": "Perceptor",
+    "previous-period-income": "Previous period income",
+    "recipient": "Recipient",
     "recipients-detail": "Recipients",
-    "total-to-enter": "Total to enter",
+    "total-to-enter": "Total to be entered",
     "withholding-base": "Withholding base",
     "withholdings-made": "Withholdings applied"
 }
