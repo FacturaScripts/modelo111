@@ -212,7 +212,8 @@ class Modelo111 extends Controller
             . ' WHERE a.codejercicio = ' . $this->dataBase->var2str($this->codejercicio)
             . ' AND a.fecha BETWEEN ' . $this->dataBase->var2str($this->dateStart)
             . ' AND ' . $this->dataBase->var2str($this->dateEnd)
-            . ' AND p.idsubcuenta IN (' . implode(',', $ids) . ')';
+            . ' AND p.idsubcuenta IN (' . implode(',', $ids) . ')'
+            . ' ORDER BY a.fecha ASC, a.numero ASC';
         foreach ($this->dataBase->select($sql) as $row) {
             $this->entryLines[] = new Partida($row);
         }
