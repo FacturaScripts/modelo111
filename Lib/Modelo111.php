@@ -191,7 +191,8 @@ class Modelo111
             . ' WHERE a.codejercicio = ' . static::$dataBase->var2str(static::$exercise->codejercicio)
             . ' AND a.fecha BETWEEN ' . static::$dataBase->var2str(static::$dateStart)
             . ' AND ' . static::$dataBase->var2str(static::$dateEnd)
-            . ' AND p.idsubcuenta IN (' . implode(',', $ids) . ')';
+            . ' AND p.idsubcuenta IN (' . implode(',', $ids) . ')'
+            . ' ORDER BY a.fecha ASC, a.numero ASC';
         foreach (static::$dataBase->select($sql) as $row) {
             static::$entryLines[] = new Partida($row);
         }
