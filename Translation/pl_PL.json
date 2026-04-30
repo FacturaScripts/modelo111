@@ -5,10 +5,10 @@
     "model-111-p": "Formularz 111 to kwartalne zeznanie dotyczące zaliczek na podatek dochodowy od osób fizycznych, które stosuje się do pracowników, profesjonalistów i przedsiębiorców.",
     "model-190": "Model 190",
     "model-190-p": "Formularz 190 jest rocznym oświadczeniem o pobranych zaliczkach na podatek dochodowy od wynagrodzeń pracowników, profesjonalistów i przedsiębiorców.",
-    "previous-period-income": "Ingresos del periodo anterior",
-    "recipient": "Perceptor",
-    "recipients-detail": "Perceptores",
-    "total-to-enter": "Total a ingresar",
-    "withholding-base": "Base de retenciones",
-    "withholdings-made": "Retenciones practicadas"
+    "previous-period-income": "Przychody z poprzedniego okresu",
+    "recipient": "Odbiorca",
+    "recipients-detail": "Odbiorcy",
+    "total-to-enter": "Kwota do wpłaty",
+    "withholding-base": "Podstawa potrąceń",
+    "withholdings-made": "Zastosowane potrącenia"
 }

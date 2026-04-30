@@ -20,61 +20,29 @@
 namespace FacturaScripts\Plugins\Modelo111\Controller;
 
 use FacturaScripts\Core\Base\Controller;
-use FacturaScripts\Core\Base\DataBase\DataBaseWhere;
 use FacturaScripts\Core\DataSrc\Ejercicios;
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Dinamic\Model\Asiento;
-use FacturaScripts\Dinamic\Model\CuentaEspecial;
-use FacturaScripts\Dinamic\Model\Ejercicio;
+use FacturaScripts\Dinamic\Lib\Modelo111 as LibModelo111;
 use FacturaScripts\Dinamic\Model\Empresa;
-use FacturaScripts\Dinamic\Model\Partida;
-use FacturaScripts\Dinamic\Model\Retencion;
-use FacturaScripts\Dinamic\Model\Subcuenta;
 
 /**
- * Description of Modelo111
- *
  * @author Carlos Garcia Gomez <carlos@facturascripts.com>
+ * @author Daniel Fernández Giménez <contacto@danielfg.es>
  */
 class Modelo111 extends Controller
 {
     /** @var string */
     public $codejercicio;
 
-    /** @var string */
-    public $dateEnd;
-
-    /** @var string */
-    public $dateStart;
-
-    /** @var Partida[] */
-    public $entryLines = [];
-
-    /** @var Partida[] */
-    public $baseLines = [];
-
-    /** @var int */
-    public $numrecipients = 0;
+    /** @var float */
+    public $ingresosPeriodoAnterior = 0.0;
 
     /** @var string */
     public $period = 'T1';
 
-    /** @var float */
-    public $baseRetenciones = 0.0;
-
-    /** @var float */
-    public $retencionesPracticadas = 0.0;
-
-    /** @var float */
-    public $ingresosPeriodoAnterior = 0.0;
-
-    /** @var float */
-    public $totalIngresar = 0.0;
-
     /** @var array */
-    public $recipientDetails = [];
+    public $result = [];
 
-    /** @return Ejercicio[] */
     public function allExercises(?int $idempresa): array
     {
         if (empty($idempresa)) {
@@ -97,7 +65,7 @@ class Modelo111 extends Controller
             'T2' => 'second-trimester',
             'T3' => 'third-trimester',
             'T4' => 'fourth-trimester',
-            'Annual' => 'annual-190',
+            'ANNUAL' => 'annual-190',
         ];
     }
 
@@ -114,287 +82,53 @@ class Modelo111 extends Controller
     {
         parent::privateCore($response, $user, $permissions);
 
-        $this->loadDates();
-        $this->ingresosPeriodoAnterior = (float)$this->request->request->get('ingresosanteriores', 0);
-        $this->loadEntryLines();
-        $this->loadBaseLines();
-        $this->loadResults();
+        $this->codejercicio = $this->request->inputOrQuery('codejercicio', date('Y'));
+        $this->period = $this->request->inputOrQuery('period', $this->getCurrentPeriod());
+        $this->ingresosPeriodoAnterior = (float)$this->request->inputOrQuery('ingresosanteriores', 0);
 
-        // Manejar la acción de descarga del archivo
-        $action = $this->request->request->get('action', '');
+        $this->result = LibModelo111::generate(
+            $this->codejercicio,
+            $this->period,
+            $this->ingresosPeriodoAnterior
+        );
+
+        $action = $this->request->inputOrQuery('action', '');
         if ($action === 'download') {
             $this->downloadFile($response);
         }
     }
 
-    protected function loadDates(): void
+    protected function getCurrentPeriod(): string
     {
-        $this->codejercicio = $this->request->request->get('codejercicio', '');
-        $this->period = $this->request->request->get('period', $this->period);
-
-        $exercise = new Ejercicio();
-        $exercise->load($this->codejercicio);
-
-        switch ($this->period) {
-            case 'T1':
-                $this->dateStart = date('01-01-Y', strtotime($exercise->fechainicio));
-                $this->dateEnd = date('31-03-Y', strtotime($exercise->fechainicio));
-                break;
-
-            case 'T2':
-                $this->dateStart = date('01-04-Y', strtotime($exercise->fechainicio));
-                $this->dateEnd = date('30-06-Y', strtotime($exercise->fechainicio));
-                break;
-
-            case 'T3':
-                $this->dateStart = date('01-07-Y', strtotime($exercise->fechainicio));
-                $this->dateEnd = date('30-09-Y', strtotime($exercise->fechainicio));
-                break;
-
-            case 'Annual':
-                $this->dateStart = date('01-01-Y', strtotime($exercise->fechainicio));
-                $this->dateEnd = date('31-12-Y', strtotime($exercise->fechainicio));
-                break;
-
-            default:
-                $this->dateStart = date('01-10-Y', strtotime($exercise->fechainicio));
-                $this->dateEnd = date('31-12-Y', strtotime($exercise->fechainicio));
-                break;
-        }
-    }
-
-    protected function loadEntryLines(): void
-    {
-        if (empty($this->codejercicio)) {
-            return;
-        }
-
-        // obtenemos el listado de subcuentas de IRPF del ejercicio
-        $ids = [];
-
-        $special = new CuentaEspecial();
-        $where = [new DataBaseWhere('codcuentaesp', 'IRPFPR')];
-        if ($special->loadWhere($where)) {
-            foreach ($special->getCuenta($this->codejercicio)->getSubcuentas() as $subcuenta) {
-                $ids[$subcuenta->id()] = $subcuenta->id();
-            }
-        }
-
-        // añadimos las de las retenciones
-        $retentionModel = new Retencion();
-        foreach ($retentionModel->all() as $retention) {
-            $subcuenta = new Subcuenta();
-
-            // subcuenta para compras
-            $whereAcr = [
-                new DataBaseWhere('codejercicio', $this->codejercicio),
-                new DataBaseWhere('codsubcuenta', $retention->codsubcuentaacr)
-            ];
-            if ($retention->codsubcuentaacr && $subcuenta->loadWhere($whereAcr)) {
-                $ids[$subcuenta->id()] = $subcuenta->id();
-            }
-
-            // subcuenta para ventas
-            $whereRet = [
-                new DataBaseWhere('codejercicio', $this->codejercicio),
-                new DataBaseWhere('codsubcuenta', $retention->codsubcuentaret)
-            ];
-            if ($retention->codsubcuentaret && $subcuenta->loadWhere($whereRet)) {
-                $ids[$subcuenta->id()] = $subcuenta->id();
-            }
-        }
-        if (empty($ids)) {
-            return;
-        }
-
-        $sql = 'SELECT * FROM ' . Partida::tableName() . ' as p'
-            . ' LEFT JOIN ' . Asiento::tableName() . ' as a ON p.idasiento = a.idasiento'
-            . ' WHERE a.codejercicio = ' . $this->dataBase->var2str($this->codejercicio)
-            . ' AND a.fecha BETWEEN ' . $this->dataBase->var2str($this->dateStart)
-            . ' AND ' . $this->dataBase->var2str($this->dateEnd)
-            . ' AND p.idsubcuenta IN (' . implode(',', $ids) . ')'
-            . ' ORDER BY a.fecha ASC, a.numero ASC';
-        foreach ($this->dataBase->select($sql) as $row) {
-            $this->entryLines[] = new Partida($row);
-        }
-    }
-
-    protected function loadBaseLines(): void
-    {
-        if (empty($this->codejercicio) || empty($this->entryLines)) {
-            return;
-        }
-
-        // obtenemos los asientos únicos de las retenciones
-        $asientos = [];
-        foreach ($this->entryLines as $line) {
-            $asientos[$line->idasiento] = $line->idasiento;
-        }
-
-        if (empty($asientos)) {
-            return;
-        }
-
-        // obtenemos las subcuentas de sueldos y salarios (640)
-        $subcuenta = new Subcuenta();
-        $where = [
-            new DataBaseWhere('codejercicio', $this->codejercicio),
-            new DataBaseWhere('codsubcuenta', '640', 'LIKE')
-        ];
-        $ids = [];
-        foreach ($subcuenta->all($where) as $sub) {
-            $ids[$sub->id()] = $sub->id();
-        }
-
-        if (empty($ids)) {
-            return;
-        }
-
-        // buscamos las partidas de gastos de personal que estén en los mismos asientos que las retenciones
-        $sql = 'SELECT * FROM ' . Partida::tableName() . ' as p'
-            . ' WHERE p.idasiento IN (' . implode(',', $asientos) . ')'
-            . ' AND p.idsubcuenta IN (' . implode(',', $ids) . ')';
-
-        foreach ($this->dataBase->select($sql) as $row) {
-            $this->baseLines[] = new Partida($row);
-        }
-    }
-
-    protected function loadResults(): void
-    {
-        $recipients = [];
-        $this->baseRetenciones = 0.0;
-        $this->retencionesPracticadas = 0.0;
-        $this->recipientDetails = [];
-
-        // obtener bases imponibles de los asientos con retenciones
-        $basesByAsiento = $this->loadBasesByAsiento();
-
-        // calculamos las retenciones practicadas (casilla 03) y los perceptores
-        foreach ($this->entryLines as $line) {
-            $codcontrapartida = $line->codcontrapartida;
-            if (empty($codcontrapartida)) {
-                continue;
-            }
-
-            $recipients[$codcontrapartida] = $codcontrapartida;
-            $this->retencionesPracticadas += $line->haber;
-
-            // inicializar perceptor si no existe
-            $this->initRecipient($codcontrapartida);
-
-            // sumar retención
-            $this->recipientDetails[$codcontrapartida]['retencion'] += $line->haber;
-
-            // sumar base imponible del asiento completo (puede estar en cualquier partida del asiento)
-            if (isset($basesByAsiento[$line->idasiento]) && $basesByAsiento[$line->idasiento] > 0) {
-                $baseImponible = $basesByAsiento[$line->idasiento];
-                $this->baseRetenciones += $baseImponible;
-                $this->recipientDetails[$codcontrapartida]['base'] += $baseImponible;
-                // marcar como procesado para no duplicar si hay múltiples retenciones en el mismo asiento
-                $basesByAsiento[$line->idasiento] = 0;
-            }
-        }
-
-        // calculamos la base de retenciones de sueldos y salarios (casilla 02) y la agrupamos por perceptor
-        foreach ($this->baseLines as $line) {
-            $codcontrapartida = $line->codcontrapartida;
-            if (empty($codcontrapartida)) {
-                continue;
-            }
-
-            $this->baseRetenciones += $line->debe;
-
-            // inicializar perceptor si no existe
-            $this->initRecipient($codcontrapartida);
-
-            // sumar base de sueldos
-            $this->recipientDetails[$codcontrapartida]['base'] += $line->debe;
-        }
-
-        $this->numrecipients = count($recipients);
-
-        // calculamos el total a ingresar (casilla 05)
-        $this->totalIngresar = $this->retencionesPracticadas + $this->ingresosPeriodoAnterior;
-
-        // ordenar por código de contrapartida
-        ksort($this->recipientDetails);
-    }
-
-    protected function loadBasesByAsiento(): array
-    {
-        if (empty($this->entryLines)) {
-            return [];
-        }
-
-        // obtener IDs únicos de asientos con retenciones
-        $asientosIds = [];
-        foreach ($this->entryLines as $line) {
-            $asientosIds[$line->idasiento] = $line->idasiento;
-        }
-
-        // cargar bases imponibles de todos los asientos con retenciones
-        $basesByAsiento = [];
-        $sql = 'SELECT idasiento, SUM(baseimponible) as total_base FROM ' . Partida::tableName()
-            . ' WHERE idasiento IN (' . implode(',', $asientosIds) . ')'
-            . ' GROUP BY idasiento';
-        foreach ($this->dataBase->select($sql) as $row) {
-            $basesByAsiento[$row['idasiento']] = (float)$row['total_base'];
-        }
-
-        return $basesByAsiento;
-    }
-
-    protected function initRecipient(string $codcontrapartida): void
-    {
-        if (isset($this->recipientDetails[$codcontrapartida])) {
-            return;
-        }
-
-        // buscar la subcuenta de la contrapartida para obtener su descripción
-        $subcuenta = new Subcuenta();
-        $whereSubcuenta = [
-            new DataBaseWhere('codejercicio', $this->codejercicio),
-            new DataBaseWhere('codsubcuenta', $codcontrapartida)
-        ];
-        $descripcion = '';
-        if ($subcuenta->loadWhere($whereSubcuenta)) {
-            $descripcion = $subcuenta->descripcion;
-        }
-
-        $this->recipientDetails[$codcontrapartida] = [
-            'codcontrapartida' => $codcontrapartida,
-            'descripcion' => $descripcion,
-            'base' => 0.0,
-            'retencion' => 0.0
-        ];
+        // obtenemos el número del trimestre en el que se encuentra la fecha actual
+        $month = date('n');
+        return match ($month) {
+            1, 2, 3 => 'T1',
+            4, 5, 6 => 'T2',
+            7, 8, 9 => 'T3',
+            10, 11, 12 => 'T4',
+            default => 'T1',
+        };
     }
 
     protected function downloadFile(&$response): void
     {
-        if (empty($this->codejercicio)) {
-            Tools::log()->warning('no-exercise-selected');
-            return;
-        }
-
-        // Obtener datos de la empresa
-        $ejercicio = new Ejercicio();
-        if (!$ejercicio->load($this->codejercicio)) {
-            Tools::log()->error('exercise-not-found');
+        if (empty($this->result)) {
+            Tools::log()->warning('no-data');
             return;
         }
 
         $empresa = new Empresa();
-        if (!$empresa->load($ejercicio->idempresa)) {
+        if (!$empresa->load($this->result['exercise']->idempresa)) {
             Tools::log()->error('company-not-found');
             return;
         }
 
         // Generar el contenido del archivo
-        $content = $this->generateFileContent($empresa, $ejercicio);
+        $content = $this->generateFileContent($empresa);
 
         // Configurar headers para descarga
-        $year = date('Y', strtotime($ejercicio->fechainicio));
+        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
         $periodo = $this->getPeriodNumber();
         $filename = $empresa->cifnif . '_' . $year . '_' . $periodo . '.111';
 
@@ -405,10 +139,10 @@ class Modelo111 extends Controller
         exit;
     }
 
-    protected function generateFileContent(Empresa $empresa, Ejercicio $ejercicio): string
+    protected function generateFileContent(Empresa $empresa): string
     {
         $lines = [];
-        $year = date('Y', strtotime($ejercicio->fechainicio));
+        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
         $periodo = $this->getPeriodNumber();
 
         // Registro tipo 1: Declarante
@@ -479,16 +213,16 @@ class Modelo111 extends Controller
         $record .= '01';
 
         // Número de perceptores (9 dígitos, sin decimales)
-        $record .= $this->formatNumeric($this->numrecipients, 9, 0);
+        $record .= $this->formatNumeric($this->result['numRecipients'], 9, 0);
 
         // Base de retenciones (15 enteros + 2 decimales = 17 caracteres)
-        $record .= $this->formatNumeric($this->baseRetenciones, 17, 2);
+        $record .= $this->formatNumeric($this->result['baseRetenciones'], 17, 2);
 
         // Retenciones practicadas (15 enteros + 2 decimales = 17 caracteres)
-        $record .= $this->formatNumeric($this->retencionesPracticadas, 17, 2);
+        $record .= $this->formatNumeric($this->result['retencionesPracticadas'], 17, 2);
 
         // Ingresos del período anterior (15 enteros + 2 decimales = 17 caracteres)
-        $record .= $this->formatNumeric($this->ingresosPeriodoAnterior, 17, 2);
+        $record .= $this->formatNumeric($this->result['ingresosPeriodoAnterior'], 17, 2);
 
         // Espacios de relleno hasta completar 252 caracteres
         $record .= str_repeat(' ', 252 - strlen($record));
@@ -528,8 +262,7 @@ class Modelo111 extends Controller
 
     protected function getPeriodNumber(): string
     {
-        return match ($this->period) {
-            'T1' => '1T',
+        return match ($this->result['period']) {
             'T2' => '2T',
             'T3' => '3T',
             'T4' => '4T',

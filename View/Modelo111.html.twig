@@ -21,7 +21,8 @@
                                 <optgroup label="{{ company.nombrecorto }}">
                                     {% for exercise in fsc.allExercises(company.idempresa) %}
                                         {% if exercise.codejercicio == fsc.codejercicio %}
-                                            <option value="{{ exercise.codejercicio }}" selected>{{ exercise.nombre }}</option>
+                                            <option value="{{ exercise.codejercicio }}"
+                                                    selected>{{ exercise.nombre }}</option>
                                         {% else %}
                                             <option value="{{ exercise.codejercicio }}">{{ exercise.nombre }}</option>
                                         {% endif %}
@@ -50,7 +51,7 @@
                         <button type="submit" name="action" value="show" class="btn btn-primary">
                             <i class="fa-solid fa-eye me-1"></i> {{ trans('preview') }}
                         </button>
-                        {% if fsc.entryLines is not empty %}
+                        {% if fsc.result.entryLines is not empty %}
                             <button type="submit" name="action" value="download" class="btn btn-success ms-2">
                                 <i class="fa-solid fa-download me-1"></i> {{ trans('download') }}
                             </button>
@@ -58,7 +59,7 @@
                     </div>
                 </div>
             </div>
-            {% if fsc.entryLines is not empty %}
+            {% if fsc.result.entryLines is not empty %}
                 <div class="row">
                     <div class="col">
                         <div class="card shadow-sm mt-3">
@@ -74,7 +75,8 @@
                                             {{ trans('number-recipients') }}
                                             <div class="input-group">
                                                 <span class="input-group-text">01</span>
-                                                <input type="number" value="{{ fsc.numrecipients }}" class="form-control text-end"
+                                                <input type="number" value="{{ fsc.result.numrecipients }}"
+                                                       class="form-control text-end"
                                                        readonly/>
                                             </div>
                                         </div>
@@ -84,7 +86,8 @@
                                             {{ trans('withholding-base') }}
                                             <div class="input-group">
                                                 <span class="input-group-text">02</span>
-                                                <input type="text" value="{{ money(fsc.baseRetenciones) }}" class="form-control text-end"
+                                                <input type="text" value="{{ money(fsc.result.baseRetenciones) }}"
+                                                       class="form-control text-end"
                                                        readonly/>
                                             </div>
                                         </div>
@@ -94,7 +97,9 @@
                                             {{ trans('withholdings-made') }}
                                             <div class="input-group">
                                                 <span class="input-group-text">03</span>
-                                                <input type="text" value="{{ money(fsc.retencionesPracticadas) }}" class="form-control text-end"
+                                                <input type="text"
+                                                       value="{{ money(fsc.result.retencionesPracticadas) }}"
+                                                       class="form-control text-end"
                                                        readonly/>
                                             </div>
                                         </div>
@@ -106,7 +111,8 @@
                                             {{ trans('previous-period-income') }}
                                             <div class="input-group">
                                                 <span class="input-group-text">04</span>
-                                                <input type="number" name="ingresosanteriores" value="{{ fsc.ingresosPeriodoAnterior }}"
+                                                <input type="number" name="ingresosanteriores"
+                                                       value="{{ fsc.ingresosPeriodoAnterior }}"
                                                        class="form-control text-end" step="0.01"/>
                                             </div>
                                         </div>
@@ -116,7 +122,8 @@
                                             {{ trans('total-to-enter') }}
                                             <div class="input-group">
                                                 <span class="input-group-text">05</span>
-                                                <input type="text" value="{{ money(fsc.totalIngresar) }}" class="form-control text-end"
+                                                <input type="text" value="{{ money(fsc.result.totalIngresar) }}"
+                                                       class="form-control text-end"
                                                        readonly/>
                                             </div>
                                         </div>
@@ -126,7 +133,7 @@
                         </div>
                     </div>
                 </div>
-                {% if fsc.recipientDetails is not empty %}
+                {% if fsc.result.recipientDetails is not empty %}
                     <div class="row">
                         <div class="col">
                             <div class="card shadow-sm mt-3">
@@ -146,7 +153,7 @@
                                             </tr>
                                             </thead>
                                             <tbody>
-                                            {% for detail in fsc.recipientDetails %}
+                                            {% for detail in fsc.result.recipientDetails %}
                                                 <tr>
                                                     <td>
                                                         <strong>{{ detail.codcontrapartida }}</strong>
@@ -162,8 +169,8 @@
                                             <tfoot>
                                             <tr class="table-active fw-bold">
                                                 <td>{{ trans('total') }}</td>
-                                                <td class="text-end">{{ money(fsc.baseRetenciones) }}</td>
-                                                <td class="text-end">{{ money(fsc.retencionesPracticadas) }}</td>
+                                                <td class="text-end">{{ money(fsc.result.baseRetenciones) }}</td>
+                                                <td class="text-end">{{ money(fsc.result.retencionesPracticadas) }}</td>
                                             </tr>
                                             </tfoot>
                                         </table>
@@ -196,7 +203,7 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {% for item in fsc.entryLines %}
+                                        {% for item in fsc.result.entryLines %}
                                             <tr>
                                                 <td>
                                                     <a href="{{ item.url() }}">{{ item.numero }}</a>
@@ -220,6 +227,8 @@
                         </div>
                     </div>
                 </div>
+            {% else %}
+                <div class="alert alert-warning">{{ trans('no-data') }}</div>
             {% endif %}
         </div>
     </form>
