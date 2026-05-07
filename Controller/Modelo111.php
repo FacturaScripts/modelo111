@@ -95,6 +95,10 @@ class Modelo111 extends Controller
         $action = $this->request->inputOrQuery('action', '');
         if ($action === 'download') {
             $this->downloadFile($response);
+        } elseif ($action === 'generate-entries') {
+            if (LibModelo111::generateEntries($this->result)) {
+                Tools::log()->notice('record-updated-correctly');
+            }
         }
     }
 

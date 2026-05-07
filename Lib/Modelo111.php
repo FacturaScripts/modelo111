@@ -20,6 +20,7 @@
 namespace FacturaScripts\Plugins\Modelo111\Lib;
 
 use FacturaScripts\Core\Base\DataBase;
+use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Asiento;
 use FacturaScripts\Dinamic\Model\CuentaEspecial;
@@ -69,7 +70,7 @@ class Modelo111
 
     /** @var float */
     protected static $retencionesPracticadas = 0.0;
-    
+
     /** @var float */
     protected static $totalIngresar = 0.0;
 
@@ -110,6 +111,212 @@ class Modelo111
             'recipientDetails' => static::$recipientDetails,
             'totalIngresar' => static::$totalIngresar,
         ];
+    }
+
+    public static function generateEntries(array $result): bool
+    {
+        if (empty($result) || $result['totalIngresar'] <= 0) {
+            Tools::log()->warning('no-data');
+            return false;
+        }
+
+        $exercise = $result['exercise'];
+        $total = $result['totalIngresar'];
+        $concepto = 'Modelo 111 ' . $result['period'] . ' ' . date('Y', strtotime($exercise->fechainicio));
+
+        $sub4751 = static::findSubcuentaIRPFPR($exercise->codejercicio);
+        if (null === $sub4751) {
+            Tools::log()->error('subaccount-not-found', ['%code%' => '4751']);
+            return false;
+        }
+
+        $cod465 = static::findCod465($result['entryLines'], $exercise->codejercicio);
+        if (null === $cod465) {
+            Tools::log()->error('subaccount-not-found', ['%code%' => '465']);
+            return false;
+        }
+
+        $sub572 = static::findSubcuenta572($exercise->codejercicio);
+        if (null === $sub572) {
+            Tools::log()->error('subaccount-not-found', ['%code%' => '572']);
+            return false;
+        }
+
+        $fecha = Tools::date();
+        $cod4751 = $sub4751->codsubcuenta;
+        $cod572 = $sub572->codsubcuenta;
+
+        return static::createAsiento($concepto . ' - Obligación', $fecha, $total, $exercise, $cod465, $cod4751)
+            && static::createAsiento($concepto . ' - Pago', $fecha, $total, $exercise, $cod4751, $cod572);
+    }
+
+    protected static function createAsiento(string $concepto, string $fecha, float $total, Ejercicio $exercise, string $codDebe, string $codHaber): bool
+    {
+        $asiento = new Asiento();
+        $asiento->codejercicio = $exercise->codejercicio;
+        $asiento->concepto = $concepto;
+        $asiento->fecha = $fecha;
+        $asiento->idempresa = $exercise->idempresa;
+        $asiento->importe = $total;
+        if (!$asiento->save()) {
+            return false;
+        }
+
+        $p1 = new Partida();
+        $p1->idasiento = $asiento->idasiento;
+        $p1->codsubcuenta = $codDebe;
+        $p1->debe = $total;
+        $p1->codcontrapartida = $codHaber;
+        $p1->concepto = $concepto;
+        if (!$p1->save()) {
+            $asiento->delete();
+            return false;
+        }
+
+        $p2 = new Partida();
+        $p2->idasiento = $asiento->idasiento;
+        $p2->codsubcuenta = $codHaber;
+        $p2->haber = $total;
+        $p2->codcontrapartida = $codDebe;
+        $p2->concepto = $concepto;
+        if (!$p2->save()) {
+            $asiento->delete();
+            return false;
+        }
+
+        return true;
+    }
+
+    protected static function findCod465(array $entryLines, string $codejercicio): ?string
+    {
+        foreach ($entryLines as $line) {
+            if (!empty($line->codcontrapartida) && str_starts_with($line->codcontrapartida, '465')) {
+                return $line->codcontrapartida;
+            }
+        }
+
+        $where = [
+            Where::eq('codejercicio', $codejercicio),
+            Where::like('codsubcuenta', '465'),
+        ];
+        foreach (Subcuenta::all($where, [], 1) as $sub) {
+            return $sub->codsubcuenta;
+        }
+
+        return null;
+    }
+
+    protected static function findSubcuenta572(string $codejercicio): ?Subcuenta
+    {
+        $where = [
+            Where::eq('codejercicio', $codejercicio),
+            Where::like('codsubcuenta', '572'),
+        ];
+        foreach (Subcuenta::all($where, [], 1) as $sub) {
+            return $sub;
+        }
+        return null;
+    }
+
+    protected static function findSubcuentaIRPFPR(string $codejercicio): ?Subcuenta
+    {
+        $special = new CuentaEspecial();
+        if (!$special->loadWhere([Where::eq('codcuentaesp', 'IRPFPR')])) {
+            return null;
+        }
+        foreach ($special->getCuenta($codejercicio)->getSubcuentas() as $subcuenta) {
+            return $subcuenta;
+        }
+        return null;
+    }
+
+    protected static function initRecipient(string $codContrapartida): void
+    {
+        if (isset(static::$recipientDetails[$codContrapartida])) {
+            return;
+        }
+
+        // buscar la subcuenta de la contrapartida para obtener su descripción
+        $subcuenta = new Subcuenta();
+        $whereSubcuenta = [
+            Where::eq('codejercicio', static::$exercise->codejercicio),
+            Where::eq('codsubcuenta', $codContrapartida)
+        ];
+        $descripcion = '';
+        if ($subcuenta->loadWhere($whereSubcuenta)) {
+            $descripcion = $subcuenta->descripcion;
+        }
+
+        static::$recipientDetails[$codContrapartida] = [
+            'codcontrapartida' => $codContrapartida,
+            'descripcion' => $descripcion,
+            'base' => 0.0,
+            'retencion' => 0.0
+        ];
+    }
+
+    protected static function loadBaseLines(): void
+    {
+        if (empty(static::$exercise->id()) || empty(static::$entryLines)) {
+            return;
+        }
+
+        // obtenemos los asientos únicos de las retenciones
+        $asientos = [];
+        foreach (static::$entryLines as $line) {
+            $asientos[$line->idasiento] = $line->idasiento;
+        }
+
+        if (empty($asientos)) {
+            return;
+        }
+
+        // obtenemos las subcuentas de sueldos y salarios (640)
+        $where = [
+            Where::eq('codejercicio', static::$exercise->codejercicio),
+            Where::like('codsubcuenta', '640')
+        ];
+        $ids = [];
+        foreach (Subcuenta::all($where) as $sub) {
+            $ids[$sub->id()] = $sub->id();
+        }
+
+        if (empty($ids)) {
+            return;
+        }
+
+        // buscamos las partidas de gastos de personal que estén en los mismos asientos que las retenciones
+        $sql = 'SELECT * FROM ' . Partida::tableName() . ' as p'
+            . ' WHERE p.idasiento IN (' . implode(',', $asientos) . ')'
+            . ' AND p.idsubcuenta IN (' . implode(',', $ids) . ')';
+
+        foreach (static::$dataBase->select($sql) as $row) {
+            static::$baseLines[] = new Partida($row);
+        }
+    }
+
+    protected static function loadBasesByAsiento(): array
+    {
+        if (empty(static::$entryLines)) {
+            return [];
+        }
+
+        // obtener IDs únicos de asientos con retenciones
+        $asientosIds = [];
+        foreach (static::$entryLines as $line) {
+            $asientosIds[$line->idasiento] = $line->idasiento;
+        }
+
+        // cargar bases imponibles de todos los asientos con retenciones
+        $basesByAsiento = [];
+        $sql = 'SELECT idasiento, SUM(baseimponible) as total_base FROM ' . Partida::tableName()
+            . ' WHERE idasiento IN (' . implode(',', $asientosIds) . ')'
+            . ' GROUP BY idasiento';
+        foreach (static::$dataBase->select($sql) as $row) {
+            $basesByAsiento[$row['idasiento']] = (float)$row['total_base'];
+        }
+
+        return $basesByAsiento;
     }
 
     protected static function loadDates(): void
@@ -198,46 +405,6 @@ class Modelo111
         }
     }
 
-    protected static function loadBaseLines(): void
-    {
-        if (empty(static::$exercise->id()) || empty(static::$entryLines)) {
-            return;
-        }
-
-        // obtenemos los asientos únicos de las retenciones
-        $asientos = [];
-        foreach (static::$entryLines as $line) {
-            $asientos[$line->idasiento] = $line->idasiento;
-        }
-
-        if (empty($asientos)) {
-            return;
-        }
-
-        // obtenemos las subcuentas de sueldos y salarios (640)
-        $where = [
-            Where::eq('codejercicio', static::$exercise->codejercicio),
-            Where::like('codsubcuenta', '640')
-        ];
-        $ids = [];
-        foreach (Subcuenta::all($where) as $sub) {
-            $ids[$sub->id()] = $sub->id();
-        }
-
-        if (empty($ids)) {
-            return;
-        }
-
-        // buscamos las partidas de gastos de personal que estén en los mismos asientos que las retenciones
-        $sql = 'SELECT * FROM ' . Partida::tableName() . ' as p'
-            . ' WHERE p.idasiento IN (' . implode(',', $asientos) . ')'
-            . ' AND p.idsubcuenta IN (' . implode(',', $ids) . ')';
-
-        foreach (static::$dataBase->select($sql) as $row) {
-            static::$baseLines[] = new Partida($row);
-        }
-    }
-
     protected static function loadResults(): void
     {
         $recipients = [];
@@ -297,54 +464,5 @@ class Modelo111
 
         // ordenar por código de contrapartida
         ksort(static::$recipientDetails);
-    }
-
-    protected static function loadBasesByAsiento(): array
-    {
-        if (empty(static::$entryLines)) {
-            return [];
-        }
-
-        // obtener IDs únicos de asientos con retenciones
-        $asientosIds = [];
-        foreach (static::$entryLines as $line) {
-            $asientosIds[$line->idasiento] = $line->idasiento;
-        }
-
-        // cargar bases imponibles de todos los asientos con retenciones
-        $basesByAsiento = [];
-        $sql = 'SELECT idasiento, SUM(baseimponible) as total_base FROM ' . Partida::tableName()
-            . ' WHERE idasiento IN (' . implode(',', $asientosIds) . ')'
-            . ' GROUP BY idasiento';
-        foreach (static::$dataBase->select($sql) as $row) {
-            $basesByAsiento[$row['idasiento']] = (float)$row['total_base'];
-        }
-
-        return $basesByAsiento;
-    }
-
-    protected static function initRecipient(string $codContrapartida): void
-    {
-        if (isset(static::$recipientDetails[$codContrapartida])) {
-            return;
-        }
-
-        // buscar la subcuenta de la contrapartida para obtener su descripción
-        $subcuenta = new Subcuenta();
-        $whereSubcuenta = [
-            Where::eq('codejercicio', static::$exercise->codejercicio),
-            Where::eq('codsubcuenta', $codContrapartida)
-        ];
-        $descripcion = '';
-        if ($subcuenta->loadWhere($whereSubcuenta)) {
-            $descripcion = $subcuenta->descripcion;
-        }
-
-        static::$recipientDetails[$codContrapartida] = [
-            'codcontrapartida' => $codContrapartida,
-            'descripcion' => $descripcion,
-            'base' => 0.0,
-            'retencion' => 0.0
-        ];
     }
 }
