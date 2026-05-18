@@ -1,5 +1,10 @@
 {
+    "accounting-created-111": "Asiento creado en el ejercicio %codejercicio% con el concepto: %concepto%",
     "annual-190": "Urtekaria (190 eredua)",
+    "download-csv": "Descargar CSV",
+    "download-xlsx": "Descargar Excel",
+    "exists-accounting-111": "Ya existe un asiento en el ejercicio %codejercicio% con el concepto: %concepto%",
+    "generate-entries": "Generar asientos",
     "model-111": "111 Modeloa",
     "model-111-190": "111 eta 190 ereduak",
     "model-111-p": "111 eredua langileei, profesionalei eta enpresariei egindako PFEZaren gaineko atxikipenen hiruhileko aitorpena da.",
@@ -7,8 +12,8 @@
     "model-190-p": "190. eredua IRPF-ren kasuetan konturaturiko kutxak adinaren arabera errazten ditu.",
     "previous-period-income": "Aurreko epeko diru-sarrerak",
     "recipient": "Jasotzailea",
-    "recipients-detail": "Perceptores",
+    "recipients-detail": "Jasotzaileak",
     "total-to-enter": "Total a ingresar",
     "withholding-base": "Atxikipenen oinarria",
-    "withholdings-made": "Retenciones practicadas"
+    "withholdings-made": "Egindako atxikipenak"
 }

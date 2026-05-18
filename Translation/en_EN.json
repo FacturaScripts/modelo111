@@ -1,5 +1,10 @@
 {
+    "accounting-created-111": "Asiento creado en el ejercicio %codejercicio% con el concepto: %concepto%",
     "annual-190": "Annual (Form 190)",
+    "download-csv": "Descargar CSV",
+    "download-xlsx": "Descargar Excel",
+    "exists-accounting-111": "Ya existe un asiento en el ejercicio %codejercicio% con el concepto: %concepto%",
+    "generate-entries": "Generar asientos",
     "model-111": "Model 111",
     "model-111-190": "Forms 111 and 190",
     "model-111-p": "Form 111 is a quarterly statement of the personal income tax withholdings made to workers, professionals and businessmen.",
@@ -9,6 +14,6 @@
     "recipient": "Recipient",
     "recipients-detail": "Recipients",
     "total-to-enter": "Total to be entered",
-    "withholding-base": "Withholding base",
+    "withholding-base": "Withholding tax base",
     "withholdings-made": "Withholdings applied"
 }

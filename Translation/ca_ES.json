@@ -1,5 +1,10 @@
 {
+    "accounting-created-111": "Assentament creat a l'exercici %codejercicio% amb el concepte: %concepto%",
     "annual-190": "Anual (Model 190)",
+    "download-csv": "Descarregar CSV",
+    "download-xlsx": "Descarregar Excel",
+    "exists-accounting-111": "Ja existeix un assentament a l'exercici %codejercicio% amb el concepte: %concepto%",
+    "generate-entries": "Generar seients",
     "model-111": "Model 111",
     "model-111-190": "Model 111 i 190",
     "model-111-p": "El Model 111 és una declaració trimestral de les retencions de l'IRPF practicades a treballadors, professionals i empresaris.",

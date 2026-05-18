@@ -1,0 +1,19 @@
+{
+    "accounting-created-111": "Asiento creado en el ejercicio %codejercicio% con el concepto: %concepto%",
+    "annual-190": "Yıllık (Model 190)",
+    "download-csv": "Descargar CSV",
+    "download-xlsx": "Descargar Excel",
+    "exists-accounting-111": "Ya existe un asiento en el ejercicio %codejercicio% con el concepto: %concepto%",
+    "generate-entries": "Generar asientos",
+    "model-111": "Model 111",
+    "model-111-190": "Model 111 ve 190",
+    "model-111-p": "Model 111, çalışanlardan, profesyonellerden ve iş insanlarından yapılan vergi kesintilerinin üç aylık beyanıdır.",
+    "model-190": "Model 190",
+    "model-190-p": "Model 190, çalışanlar, profesyoneller ve işletmelerden kesilen IRPF tutarlarının yıllık beyanıdır.",
+    "previous-period-income": "Önceki dönem gelirleri",
+    "recipient": "Alıcı",
+    "recipients-detail": "Alıcı ayrıntıları",
+    "total-to-enter": "Girilmesi gereken toplam",
+    "withholding-base": "Stopaj matrahı",
+    "withholdings-made": "Uygulanan stopajlar"
+}

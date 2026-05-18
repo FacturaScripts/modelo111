@@ -1,5 +1,10 @@
 {
+    "accounting-created-111": "Asiento creado en el ejercicio %codejercicio% con el concepto: %concepto%",
     "annual-190": "Annuale (Modello 190)",
+    "download-csv": "Descargar CSV",
+    "download-xlsx": "Descargar Excel",
+    "exists-accounting-111": "Ya existe un asiento en el ejercicio %codejercicio% con el concepto: %concepto%",
+    "generate-entries": "Generar asientos",
     "model-111": "Modello 111",
     "model-111-190": "Modello 111 e 190",
     "model-111-p": "Il Modello 111 è una dichiarazione trimestrale delle ritenute IRPF applicate ai lavoratori, professionisti ed imprenditori.",
@@ -10,5 +15,5 @@
     "recipients-detail": "Destinatari",
     "total-to-enter": "Totale da inserire",
     "withholding-base": "Base delle ritenute",
-    "withholdings-made": "Retenciones practicadas"
+    "withholdings-made": "Ritenute praticate"
 }
