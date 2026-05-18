@@ -108,6 +108,120 @@ class Modelo111 extends Controller
         } elseif ($action === 'print') {
             $this->printAction();
         }
+        if ($action === 'download-csv') {
+            $this->downloadCsv($response);
+        }
+        if ($action === 'download-xlsx') {
+            $this->downloadXlsx($response);
+        }
+    }
+
+    protected function downloadCsv(&$response): void
+    {
+        if (empty($this->result['entryLines'])) {
+            Tools::log()->warning('no-data');
+            return;
+        }
+
+        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
+        $periodo = $this->getPeriodNumber();
+        $filename = 'modelo111_' . $year . '_' . $periodo . '.csv';
+
+        $rows = [];
+        $rows[] = implode(';', [
+            Tools::lang()->trans('accounting-entry'),
+            Tools::lang()->trans('subaccount'),
+            Tools::lang()->trans('counterpart'),
+            Tools::lang()->trans('concept'),
+            Tools::lang()->trans('debit'),
+            Tools::lang()->trans('credit'),
+            Tools::lang()->trans('date'),
+        ]);
+        foreach ($this->result['entryLines'] as $line) {
+            $rows[] = implode(';', [
+                $line->numero,
+                $line->codsubcuenta,
+                $line->codcontrapartida,
+                '"' . str_replace('"', '""', strip_tags($line->concepto)) . '"',
+                number_format($line->debe, 2, ',', ''),
+                number_format($line->haber, 2, ',', ''),
+                $line->fecha,
+            ]);
+        }
+        // fila de totales
+        $rows[] = implode(';', [
+            '',
+            '',
+            '',
+            Tools::lang()->trans('total'),
+            number_format($this->result['totalDebe'], 2, ',', ''),
+            number_format($this->result['totalHaber'], 2, ',', ''),
+            '',
+        ]);
+
+        $content = implode("\n", $rows);
+
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->setContent("\xEF\xBB\xBF" . $content); // BOM UTF-8 para Excel
+        $response->send();
+        exit;
+    }
+
+    protected function downloadXlsx(&$response): void
+    {
+        if (empty($this->result['entryLines'])) {
+            Tools::log()->warning('no-data');
+            return;
+        }
+
+        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
+        $periodo = $this->getPeriodNumber();
+        $filename = 'modelo111_' . $year . '_' . $periodo . '.xlsx';
+
+        $writer = new \XLSXWriter();
+        $writer->setAuthor('FacturaScripts');
+        $writer->setTitle('Modelo 111');
+
+        $sheetName = 'Modelo 111';
+        $headers = [
+            Tools::lang()->trans('accounting-entry') => 'string',
+            Tools::lang()->trans('subaccount') => 'string',
+            Tools::lang()->trans('counterpart') => 'string',
+            Tools::lang()->trans('concept') => 'string',
+            Tools::lang()->trans('debit') => 'price',
+            Tools::lang()->trans('credit') => 'price',
+            Tools::lang()->trans('date') => 'string',
+        ];
+        $writer->writeSheetHeader($sheetName, $headers);
+
+        foreach ($this->result['entryLines'] as $line) {
+            $writer->writeSheetRow($sheetName, [
+                $line->numero,
+                $line->codsubcuenta,
+                $line->codcontrapartida,
+                strip_tags($line->concepto),
+                $line->debe,
+                $line->haber,
+                $line->fecha,
+            ]);
+        }
+
+        $writer->writeSheetRow($sheetName, [
+            '',
+            '',
+            '',
+            Tools::lang()->trans('total'),
+            $this->result['totalDebe'],
+            $this->result['totalHaber'],
+            '',
+        ]);
+
+        $response->headers->set('Content-Type', 'application/octet-stream');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->setContent($writer->writeToString());
+        $response->send();
+        exit;
     }
 
     protected function printAction(): void
