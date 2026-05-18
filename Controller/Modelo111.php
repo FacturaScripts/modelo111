@@ -93,15 +93,6 @@ class Modelo111 extends Controller
             $this->ingresosPeriodoAnterior
         );
 
-        $totalDebe = 0.0;
-        $totalHaber = 0.0;
-        foreach ($this->result['entryLines'] ?? [] as $line) {
-            $totalDebe += $line->debe;
-            $totalHaber += $line->haber;
-        }
-        $this->result['totalDebe'] = $totalDebe;
-        $this->result['totalHaber'] = $totalHaber;
-
         $action = $this->request->inputOrQuery('action', '');
         if ($action === 'download') {
             $this->downloadFile($response);
