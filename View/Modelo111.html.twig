@@ -52,8 +52,35 @@
                             <i class="fa-solid fa-eye me-1"></i> {{ trans('preview') }}
                         </button>
                         {% if fsc.result.entryLines is not empty %}
-                            <button type="submit" name="action" value="download" class="btn btn-success ms-2">
-                                <i class="fa-solid fa-download me-1"></i> {{ trans('download') }}
+                            <div class="btn-group ms-2">
+                                <button type="button" class="btn btn-success dropdown-toggle"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa-solid fa-download me-1"></i> {{ trans('download') }}
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <button type="submit" name="action" value="download"
+                                                class="dropdown-item">
+                                            <i class="fa-solid fa-file me-1"></i> {{ trans('download') }} (.111)
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button type="submit" name="action" value="download-xlsx"
+                                                class="dropdown-item">
+                                            <i class="fa-solid fa-file-excel me-1"></i> {{ trans('download-xlsx') }}
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button type="submit" name="action" value="download-csv"
+                                                class="dropdown-item">
+                                            <i class="fa-solid fa-file-csv me-1"></i> {{ trans('download-csv') }}
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            <button type="submit" name="action" value="print" formtarget="_blank"
+                                    class="btn btn-secondary ms-2">
+                                <i class="fa-solid fa-print me-1"></i> {{ trans('print') }}
                             </button>
                             <button type="submit" name="action" value="generate-entries" class="btn btn-secondary ms-2">
                                 <i class="fa-solid fa-receipt me-1"></i> {{ trans('generate-entries') }}
@@ -224,6 +251,14 @@
                                             </tr>
                                         {% endfor %}
                                         </tbody>
+                                        <tfoot>
+                                        <tr class="table-active fw-bold">
+                                            <td colspan="4">{{ trans('total') }}</td>
+                                            <td class="text-end">{{ money(fsc.result.totalDebe) }}</td>
+                                            <td class="text-end">{{ money(fsc.result.totalHaber) }}</td>
+                                            <td></td>
+                                        </tr>
+                                        </tfoot>
                                     </table>
                                 </div>
                             </div>

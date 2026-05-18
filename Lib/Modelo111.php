@@ -72,6 +72,12 @@ class Modelo111
     protected static $retencionesPracticadas = 0.0;
 
     /** @var float */
+    protected static $totalDebe = 0.0;
+
+    /** @var float */
+    protected static $totalHaber = 0.0;
+
+    /** @var float */
     protected static $totalIngresar = 0.0;
 
     public static function generate(string $codejercicio, string $period, float $ingresosAnteriores = 0.0): array
@@ -109,6 +115,8 @@ class Modelo111
             'ingresosPeriodoAnterior' => static::$ingresosPeriodoAnterior,
             'numRecipients' => static::$numRecipients,
             'recipientDetails' => static::$recipientDetails,
+            'totalDebe' => static::$totalDebe,
+            'totalHaber' => static::$totalHaber,
             'totalIngresar' => static::$totalIngresar,
         ];
     }
@@ -455,6 +463,14 @@ class Modelo111
 
             // sumar base de sueldos
             static::$recipientDetails[$codcontrapartida]['base'] += $line->debe;
+        }
+
+        // calcular totales debe/haber de entryLines
+        static::$totalDebe = 0.0;
+        static::$totalHaber = 0.0;
+        foreach (static::$entryLines as $line) {
+            static::$totalDebe += $line->debe;
+            static::$totalHaber += $line->haber;
         }
 
         static::$numRecipients = count($recipients);
