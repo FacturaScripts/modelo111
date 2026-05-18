@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Modelo111 plugin for FacturaScripts
  * Copyright (C) 2026 Carlos Garcia Gomez <carlos@facturascripts.com>
@@ -154,13 +155,28 @@ class Modelo111
         $cod4751 = $sub4751->codsubcuenta;
         $cod572 = $sub572->codsubcuenta;
 
-        return static::createAsiento($concepto . ' - Obligación', $fecha, $total, $exercise, $cod465, $cod4751)
-            && static::createAsiento($concepto . ' - Pago', $fecha, $total, $exercise, $cod4751, $cod572);
+        $accObl = static::createAsiento($concepto . ' - Obligación', $fecha, $total, $exercise, $cod465, $cod4751);
+        $accPag = static::createAsiento($concepto . ' - Pago', $fecha, $total, $exercise, $cod4751, $cod572);
+
+        return $accObl && $accPag;
     }
 
     protected static function createAsiento(string $concepto, string $fecha, float $total, Ejercicio $exercise, string $codDebe, string $codHaber): bool
     {
         $asiento = new Asiento();
+
+        // si ya existe un asiento igual, no lo creamos
+        if ($asiento->loadWhere(
+            [
+                Where::eq('codejercicio', $exercise->codejercicio),
+                Where::eq('concepto', $concepto),
+            ]
+        )) {
+            Tools::log()->warning('exists-accounting-111', ['%codejercicio%' => $exercise->codejercicio, '%concepto%' => $concepto]);
+            return false;
+        }
+
+        $asiento->clear();
         $asiento->codejercicio = $exercise->codejercicio;
         $asiento->concepto = $concepto;
         $asiento->fecha = $fecha;
@@ -192,6 +208,7 @@ class Modelo111
             return false;
         }
 
+        Tools::log()->notice('accounting-created-111', ['%codejercicio%' => $exercise->codejercicio, '%concepto%' => $concepto]);
         return true;
     }
 
@@ -205,7 +222,7 @@ class Modelo111
 
         $where = [
             Where::eq('codejercicio', $codejercicio),
-            Where::like('codsubcuenta', '465'),
+            Where::like('codsubcuenta', '465%'),
         ];
         foreach (Subcuenta::all($where, [], 1) as $sub) {
             return $sub->codsubcuenta;
@@ -218,7 +235,7 @@ class Modelo111
     {
         $where = [
             Where::eq('codejercicio', $codejercicio),
-            Where::like('codsubcuenta', '572'),
+            Where::like('codsubcuenta', '572%'),
         ];
         foreach (Subcuenta::all($where, [], 1) as $sub) {
             return $sub;

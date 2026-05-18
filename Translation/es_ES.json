@@ -13,5 +13,7 @@
     "total-to-enter": "Total a ingresar",
     "withholding-base": "Base de retenciones",
     "generate-entries": "Generar asientos",
-    "withholdings-made": "Retenciones practicadas"
+    "withholdings-made": "Retenciones practicadas",
+    "exists-accounting-111": "Ya existe un asiento en el ejercicio %codejercicio% con el concepto: %concepto%",
+    "accounting-created-111": "Asiento creado en el ejercicio %codejercicio% con el concepto: %concepto%"
 }
