@@ -1,5 +1,4 @@
 <?php
-
 /**
  * This file is part of Modelo111 plugin for FacturaScripts
  * Copyright (C) 2026 Carlos Garcia Gomez <carlos@facturascripts.com>

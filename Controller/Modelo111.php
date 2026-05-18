@@ -25,6 +25,7 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Lib\ExportManager;
 use FacturaScripts\Dinamic\Lib\Modelo111 as LibModelo111;
 use FacturaScripts\Dinamic\Model\Empresa;
+use XLSXWriter;
 
 /**
  * @author Carlos Garcia Gomez <carlos@facturascripts.com>
@@ -122,13 +123,13 @@ class Modelo111 extends Controller
 
         $rows = [];
         $rows[] = implode(';', [
-            Tools::lang()->trans('accounting-entry'),
-            Tools::lang()->trans('subaccount'),
-            Tools::lang()->trans('counterpart'),
-            Tools::lang()->trans('concept'),
-            Tools::lang()->trans('debit'),
-            Tools::lang()->trans('credit'),
-            Tools::lang()->trans('date'),
+            Tools::trans('accounting-entry'),
+            Tools::trans('subaccount'),
+            Tools::trans('counterpart'),
+            Tools::trans('concept'),
+            Tools::trans('debit'),
+            Tools::trans('credit'),
+            Tools::trans('date'),
         ]);
         foreach ($this->result['entryLines'] as $line) {
             $rows[] = implode(';', [
@@ -146,7 +147,7 @@ class Modelo111 extends Controller
             '',
             '',
             '',
-            Tools::lang()->trans('total'),
+            Tools::trans('total'),
             number_format($this->result['totalDebe'], 2, ',', ''),
             number_format($this->result['totalHaber'], 2, ',', ''),
             '',
@@ -172,19 +173,19 @@ class Modelo111 extends Controller
         $periodo = $this->getPeriodNumber();
         $filename = 'modelo111_' . $year . '_' . $periodo . '.xlsx';
 
-        $writer = new \XLSXWriter();
+        $writer = new XLSXWriter();
         $writer->setAuthor('FacturaScripts');
         $writer->setTitle('Modelo 111');
 
         $sheetName = 'Modelo 111';
         $headers = [
-            Tools::lang()->trans('accounting-entry') => 'string',
-            Tools::lang()->trans('subaccount') => 'string',
-            Tools::lang()->trans('counterpart') => 'string',
-            Tools::lang()->trans('concept') => 'string',
-            Tools::lang()->trans('debit') => 'price',
-            Tools::lang()->trans('credit') => 'price',
-            Tools::lang()->trans('date') => 'string',
+            Tools::trans('accounting-entry') => 'string',
+            Tools::trans('subaccount') => 'string',
+            Tools::trans('counterpart') => 'string',
+            Tools::trans('concept') => 'string',
+            Tools::trans('debit') => 'price',
+            Tools::trans('credit') => 'price',
+            Tools::trans('date') => 'string',
         ];
         $writer->writeSheetHeader($sheetName, $headers);
 
@@ -204,7 +205,7 @@ class Modelo111 extends Controller
             '',
             '',
             '',
-            Tools::lang()->trans('total'),
+            Tools::trans('total'),
             $this->result['totalDebe'],
             $this->result['totalHaber'],
             '',
