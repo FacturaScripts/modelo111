@@ -22,6 +22,7 @@ namespace FacturaScripts\Plugins\Modelo111\Controller;
 use FacturaScripts\Core\Base\Controller;
 use FacturaScripts\Core\DataSrc\Ejercicios;
 use FacturaScripts\Core\Tools;
+use FacturaScripts\Dinamic\Lib\ExportManager;
 use FacturaScripts\Dinamic\Lib\Modelo111 as LibModelo111;
 use FacturaScripts\Dinamic\Model\Empresa;
 
@@ -92,9 +93,20 @@ class Modelo111 extends Controller
             $this->ingresosPeriodoAnterior
         );
 
+        $totalDebe = 0.0;
+        $totalHaber = 0.0;
+        foreach ($this->result['entryLines'] ?? [] as $line) {
+            $totalDebe += $line->debe;
+            $totalHaber += $line->haber;
+        }
+        $this->result['totalDebe'] = $totalDebe;
+        $this->result['totalHaber'] = $totalHaber;
+
         $action = $this->request->inputOrQuery('action', '');
         if ($action === 'download') {
             $this->downloadFile($response);
+        } elseif ($action === 'print') {
+            $this->printAction();
         }
         if ($action === 'download-csv') {
             $this->downloadCsv($response);
@@ -210,6 +222,75 @@ class Modelo111 extends Controller
         $response->setContent($writer->writeToString());
         $response->send();
         exit;
+    }
+
+    protected function printAction(): void
+    {
+        if (empty($this->result)) {
+            return;
+        }
+
+        $this->setTemplate(false);
+
+        $exportManager = new ExportManager();
+        $exportManager->newDoc('PDF', Tools::trans('model-111-190'));
+
+        // resumen — las claves de las filas deben coincidir con los headers
+        $recipients = Tools::trans('number-recipients');
+        $base = Tools::trans('withholding-base');
+        $withholdings = Tools::trans('withholdings-made');
+        $previous = Tools::trans('previous-period-income');
+        $total = Tools::trans('total-to-enter');
+
+        $exportManager->addTablePage(
+            [$recipients, $base, $withholdings, $previous, $total],
+            [[
+                $recipients => $this->result['numRecipients'],
+                $base => Tools::money($this->result['baseRetenciones']),
+                $withholdings => Tools::money($this->result['retencionesPracticadas']),
+                $previous => Tools::money($this->result['ingresosPeriodoAnterior']),
+                $total => Tools::money($this->result['totalIngresar']),
+            ]]
+        );
+
+        // asientos contables
+        if (!empty($this->result['entryLines'])) {
+            $entry = Tools::trans('accounting-entry');
+            $subaccount = Tools::trans('subaccount');
+            $counterpart = Tools::trans('counterpart');
+            $concept = Tools::trans('concept');
+            $debit = Tools::trans('debit');
+            $credit = Tools::trans('credit');
+            $date = Tools::trans('date');
+
+            $entryRows = [];
+            foreach ($this->result['entryLines'] as $line) {
+                $entryRows[] = [
+                    $entry => $line->numero,
+                    $subaccount => $line->codsubcuenta,
+                    $counterpart => $line->codcontrapartida,
+                    $concept => $line->concepto,
+                    $debit => Tools::money($line->debe),
+                    $credit => Tools::money($line->haber),
+                    $date => $line->fecha,
+                ];
+            }
+            $entryRows[] = [
+                $entry => '',
+                $subaccount => '',
+                $counterpart => '',
+                $concept => Tools::trans('total'),
+                $debit => Tools::money($this->result['totalDebe']),
+                $credit => Tools::money($this->result['totalHaber']),
+                $date => '',
+            ];
+            $exportManager->addTablePage(
+                [$entry, $subaccount, $counterpart, $concept, $debit, $credit, $date],
+                $entryRows
+            );
+        }
+
+        $exportManager->show($this->response);
     }
 
     protected function getCurrentPeriod(): string
