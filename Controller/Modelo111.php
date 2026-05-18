@@ -96,7 +96,8 @@ class Modelo111 extends Controller
         $action = $this->request->inputOrQuery('action', '');
         if ($action === 'download') {
             $this->downloadFile($response);
-        } elseif ($action === 'print') {
+        }
+        if ($action === 'print') {
             $this->printAction();
         }
         if ($action === 'download-csv') {
@@ -104,6 +105,11 @@ class Modelo111 extends Controller
         }
         if ($action === 'download-xlsx') {
             $this->downloadXlsx($response);
+        }
+        if ($action === 'generate-entries') {
+            if (LibModelo111::generateEntries($this->result)) {
+                Tools::log()->notice('record-updated-correctly');
+            }
         }
     }
 
