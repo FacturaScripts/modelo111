@@ -96,17 +96,13 @@ class Modelo111 extends Controller
         $action = $this->request->inputOrQuery('action', '');
         if ($action === 'download') {
             $this->downloadFile($response);
-        }
-        if ($action === 'print') {
+        } elseif ($action === 'print') {
             $this->printAction();
-        }
-        if ($action === 'download-csv') {
+        } elseif ($action === 'download-csv') {
             $this->downloadCsv($response);
-        }
-        if ($action === 'download-xlsx') {
+        } elseif ($action === 'download-xlsx') {
             $this->downloadXlsx($response);
-        }
-        if ($action === 'generate-entries') {
+        } elseif ($action === 'generate-entries') {
             if (LibModelo111::generateEntries($this->result)) {
                 Tools::log()->notice('record-updated-correctly');
             }
