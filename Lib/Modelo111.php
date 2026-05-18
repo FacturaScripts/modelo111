@@ -299,7 +299,7 @@ class Modelo111
         // obtenemos las subcuentas de sueldos y salarios (640)
         $where = [
             Where::eq('codejercicio', static::$exercise->codejercicio),
-            Where::like('codsubcuenta', '640')
+            Where::like('codsubcuenta', '640%')
         ];
         $ids = [];
         foreach (Subcuenta::all($where) as $sub) {
