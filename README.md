@@ -17,7 +17,7 @@ https://facturascripts.com/contacto
 Los tests se ejecutan en GitHub Actions contra MySQL y PostgreSQL con cada push. Para lanzarlos en local, copia `Test/main` a `Test/Plugins` en un FacturaScripts con el plugin instalado y ejecuta `vendor/bin/phpunit -c phpunit-plugins.xml`.
 
 ## Links
-- [Curso de FacturaScripts](https://www.youtube.com/watch?v=rGopZA3ErzE&list=PLNxcJ5CWZ8V6nfeVu6vieKI_d8a_ObLfY)
+- [Curso de FacturaScripts](https://facturascripts.com/cursos/curso-de-usuario)
 - [Programa de contabilidad gratis para autónomos](https://facturascripts.com/software-contabilidad)
 - [Programa para hacer facturas gratis](https://facturascripts.com/programa-para-hacer-facturas)
 - [Programa para hacer presupuestos gratis](https://facturascripts.com/programa-de-presupuestos)
