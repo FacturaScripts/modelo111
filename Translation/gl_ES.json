@@ -1,10 +1,10 @@
 {
-    "accounting-created-111": "Asiento creado en el ejercicio %codejercicio% con el concepto: %concepto%",
+    "accounting-created-111": "Asento creado no exercicio %codejercicio% co concepto: %concepto%",
     "annual-190": "Anual (Modelo 190)",
     "download-csv": "Descargar CSV",
     "download-xlsx": "Descargar Excel",
-    "exists-accounting-111": "Ya existe un asiento en el ejercicio %codejercicio% con el concepto: %concepto%",
-    "generate-entries": "Generar asientos",
+    "exists-accounting-111": "Xa existe un asento no exercicio %codejercicio% co concepto: %concepto%",
+    "generate-entries": "Xerar asentos",
     "model-111": "Modelo 111",
     "model-111-190": "Modelos 111 e 190",
     "model-111-p": "O Modelo 111 é unha declaración trimestral das retencións do IRPF practicadas a traballadores, profesionáis e empresarios.",

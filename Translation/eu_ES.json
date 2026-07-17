@@ -1,10 +1,10 @@
 {
-    "accounting-created-111": "Asiento creado en el ejercicio %codejercicio% con el concepto: %concepto%",
+    "accounting-created-111": "Sarrera sortu da %codejercicio% ekitaldian, kontzeptua: %concepto%",
     "annual-190": "Urtekaria (190 eredua)",
     "download-csv": "Descargar CSV",
-    "download-xlsx": "Descargar Excel",
-    "exists-accounting-111": "Ya existe un asiento en el ejercicio %codejercicio% con el concepto: %concepto%",
-    "generate-entries": "Generar asientos",
+    "download-xlsx": "Excel deskargatu",
+    "exists-accounting-111": "Jadanik badago kontu-sarrera bat %codejercicio% ekitaldian honako kontzeptuarekin: %concepto%",
+    "generate-entries": "Sortu idazpenak",
     "model-111": "111 Modeloa",
     "model-111-190": "111 eta 190 ereduak",
     "model-111-p": "111 eredua langileei, profesionalei eta enpresariei egindako PFEZaren gaineko atxikipenen hiruhileko aitorpena da.",
@@ -13,7 +13,7 @@
     "previous-period-income": "Aurreko epeko diru-sarrerak",
     "recipient": "Jasotzailea",
     "recipients-detail": "Jasotzaileak",
-    "total-to-enter": "Total a ingresar",
+    "total-to-enter": "Sartu beharreko guztira",
     "withholding-base": "Atxikipenen oinarria",
     "withholdings-made": "Egindako atxikipenak"
 }
