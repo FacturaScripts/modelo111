@@ -389,6 +389,10 @@ class Modelo111
         $where = [Where::eq('codcuentaesp', 'IRPFPR')];
         if ($special->loadWhere($where)) {
             foreach ($special->getCuenta(static::$exercise->codejercicio)->getSubcuentas() as $subcuenta) {
+                // excluimos las retenciones de alquileres (IRPFA), que van al modelo 115
+                if ($subcuenta->getSpecialAccountCode() === 'IRPFA') {
+                    continue;
+                }
                 $ids[$subcuenta->id()] = $subcuenta->id();
             }
         }
@@ -402,7 +406,8 @@ class Modelo111
                 Where::eq('codejercicio', static::$exercise->codejercicio),
                 Where::eq('codsubcuenta', $retention->codsubcuentaacr)
             ];
-            if ($retention->codsubcuentaacr && $subcuenta->loadWhere($whereAcr)) {
+            if ($retention->codsubcuentaacr && $subcuenta->loadWhere($whereAcr) &&
+                $subcuenta->getSpecialAccountCode() !== 'IRPFA') {
                 $ids[$subcuenta->id()] = $subcuenta->id();
             }
 
@@ -411,7 +416,8 @@ class Modelo111
                 Where::eq('codejercicio', static::$exercise->codejercicio),
                 Where::eq('codsubcuenta', $retention->codsubcuentaret)
             ];
-            if ($retention->codsubcuentaret && $subcuenta->loadWhere($whereRet)) {
+            if ($retention->codsubcuentaret && $subcuenta->loadWhere($whereRet) &&
+                $subcuenta->getSpecialAccountCode() !== 'IRPFA') {
                 $ids[$subcuenta->id()] = $subcuenta->id();
             }
         }

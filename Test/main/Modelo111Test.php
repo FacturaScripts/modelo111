@@ -24,6 +24,8 @@ use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Asiento;
 use FacturaScripts\Dinamic\Model\Ejercicio;
 use FacturaScripts\Dinamic\Model\Partida;
+use FacturaScripts\Dinamic\Model\Retencion;
+use FacturaScripts\Dinamic\Model\Subcuenta;
 use FacturaScripts\Plugins\Modelo111\Lib\Modelo111;
 
 final class Modelo111Test extends Modelo111TestCase
@@ -121,6 +123,90 @@ final class Modelo111Test extends Modelo111TestCase
 
         // si volvemos a generar, no debe crear asientos duplicados
         $this->assertFalse(Modelo111::generateEntries($result));
+    }
+
+    /**
+     * Las retenciones de alquileres (cuenta especial IRPFA) van al modelo 115,
+     * no deben aparecer en el modelo 111. Issue 110-286-046.
+     */
+    public function testExcluyeRetencionesAlquiler(): void
+    {
+        $exercise = $this->getCurrentExercise();
+
+        // creamos la subcuenta de IRPF de alquileres con la cuenta especial IRPFA
+        $subAlquiler = new Subcuenta();
+        $subAlquiler->codcuenta = '4751';
+        $subAlquiler->codcuentaesp = 'IRPFA';
+        $subAlquiler->codejercicio = $exercise->codejercicio;
+        $subAlquiler->codsubcuenta = '4751000019';
+        $subAlquiler->descripcion = 'HP acreedora retenciones alquileres';
+        $this->assertTrue($subAlquiler->save());
+
+        // creamos la retención del 19% de alquileres sobre esa subcuenta
+        $retencion = new Retencion();
+        $retencion->codretencion = 'ALQ19';
+        $retencion->codsubcuentaacr = $subAlquiler->codsubcuenta;
+        $retencion->descripcion = 'IRPF alquileres 19%';
+        $retencion->porcentaje = 19;
+        $this->assertTrue($retencion->save());
+        $this->addCleanup(static function () use ($retencion, $subAlquiler) {
+            $retencion->delete();
+            $subAlquiler->delete();
+        });
+
+        // una nómina normal: 1000€ de sueldo con 150€ de retención
+        $this->createNominaAsiento($exercise, 1000.0, 150.0);
+
+        // y un asiento de alquiler: 800€ con 152€ de retención en la subcuenta IRPFA
+        $asiento = new Asiento();
+        $asiento->codejercicio = $exercise->codejercicio;
+        $asiento->concepto = 'Alquiler de prueba';
+        $asiento->fecha = Tools::date();
+        $asiento->idempresa = $exercise->idempresa;
+        $asiento->importe = 800.0;
+        $this->assertTrue($asiento->save());
+        $this->addCleanup(static function () use ($asiento) {
+            if ($asiento->exists()) {
+                $asiento->delete();
+            }
+        });
+
+        // arrendamientos y cánones (621) al debe
+        $p1 = new Partida();
+        $p1->idasiento = $asiento->idasiento;
+        $p1->codsubcuenta = '6210000000';
+        $p1->debe = 800.0;
+        $p1->codcontrapartida = '4100000000';
+        $p1->concepto = $asiento->concepto;
+        $this->assertTrue($p1->save());
+
+        // retención de alquileres (4751000019, IRPFA) al haber
+        $p2 = new Partida();
+        $p2->idasiento = $asiento->idasiento;
+        $p2->codsubcuenta = $subAlquiler->codsubcuenta;
+        $p2->haber = 152.0;
+        $p2->codcontrapartida = '4100000000';
+        $p2->concepto = $asiento->concepto;
+        $this->assertTrue($p2->save());
+
+        // acreedores (410) al haber
+        $p3 = new Partida();
+        $p3->idasiento = $asiento->idasiento;
+        $p3->codsubcuenta = '4100000000';
+        $p3->haber = 648.0;
+        $p3->codcontrapartida = '6210000000';
+        $p3->concepto = $asiento->concepto;
+        $this->assertTrue($p3->save());
+
+        $result = Modelo111::generate($exercise->codejercicio, $this->getCurrentPeriod());
+        $this->assertNotEmpty($result);
+
+        // solo debe salir la nómina: la retención del alquiler queda fuera
+        $this->assertEqualsWithDelta(150.0, $result['retencionesPracticadas'], 0.001);
+        $this->assertEqualsWithDelta(1000.0, $result['baseRetenciones'], 0.001);
+        $this->assertEqualsWithDelta(150.0, $result['totalIngresar'], 0.001);
+        $this->assertSame(1, $result['numRecipients']);
+        $this->assertArrayNotHasKey('4100000000', $result['recipientDetails']);
     }
 
     public function testGenerateEntriesSinDatos(): void
