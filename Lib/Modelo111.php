@@ -90,6 +90,8 @@ class Modelo111
 
         // inicializamos las variables
         static::$dataBase = new DataBase();
+        static::$baseLines = [];
+        static::$entryLines = [];
         static::$ingresosPeriodoAnterior = $ingresosAnteriores;
         static::$period = strtoupper($period);
 
