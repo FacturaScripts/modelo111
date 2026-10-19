@@ -25,6 +25,8 @@ use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Asiento;
 use FacturaScripts\Dinamic\Model\CuentaEspecial;
 use FacturaScripts\Dinamic\Model\Ejercicio;
+use FacturaScripts\Dinamic\Model\FacturaCliente;
+use FacturaScripts\Dinamic\Model\FacturaProveedor;
 use FacturaScripts\Dinamic\Model\Partida;
 use FacturaScripts\Dinamic\Model\Retencion;
 use FacturaScripts\Dinamic\Model\Subcuenta;
@@ -281,6 +283,36 @@ class Modelo111
         ];
     }
 
+    /**
+     * Devuelve los ids de los asientos de las líneas de retención que pertenecen a una factura.
+     * En un asiento de factura la retención va al haber, salvo en las rectificativas (importes
+     * negativos), que la revierten al debe. Los asientos de pago u otros no se incluyen.
+     *
+     * @return array
+     */
+    protected static function loadInvoiceAsientos(): array
+    {
+        if (empty(static::$entryLines)) {
+            return [];
+        }
+
+        $asientosIds = [];
+        foreach (static::$entryLines as $line) {
+            $asientosIds[$line->idasiento] = $line->idasiento;
+        }
+
+        $invoiceAsientos = [];
+        foreach ([FacturaProveedor::tableName(), FacturaCliente::tableName()] as $table) {
+            $sql = 'SELECT idasiento FROM ' . $table
+                . ' WHERE idasiento IN (' . implode(',', $asientosIds) . ')';
+            foreach (static::$dataBase->select($sql) as $row) {
+                $invoiceAsientos[$row['idasiento']] = $row['idasiento'];
+            }
+        }
+
+        return $invoiceAsientos;
+    }
+
     protected static function loadBaseLines(): void
     {
         if (empty(static::$exercise->id()) || empty(static::$entryLines)) {
@@ -447,6 +479,9 @@ class Modelo111
         // obtener bases imponibles de los asientos con retenciones
         $basesByAsiento = static::loadBasesByAsiento();
 
+        // asientos de factura: su debe son retenciones revertidas por facturas rectificativas
+        $invoiceAsientos = static::loadInvoiceAsientos();
+
         // calculamos las retenciones practicadas (casilla 03) y los perceptores
         foreach (static::$entryLines as $line) {
             $codcontrapartida = $line->codcontrapartida;
@@ -455,16 +490,23 @@ class Modelo111
             }
 
             $recipients[$codcontrapartida] = $codcontrapartida;
-            static::$retencionesPracticadas += $line->haber;
+
+            // retención neta: el haber suma y el debe de las facturas rectificativas resta
+            $retencionNeta = $line->haber;
+            if (isset($invoiceAsientos[$line->idasiento])) {
+                $retencionNeta -= $line->debe;
+            }
+            static::$retencionesPracticadas += $retencionNeta;
 
             // inicializar perceptor si no existe
             static::initRecipient($codcontrapartida);
 
             // sumar retención
-            static::$recipientDetails[$codcontrapartida]['retencion'] += $line->haber;
+            static::$recipientDetails[$codcontrapartida]['retencion'] += $retencionNeta;
 
-            // sumar base imponible del asiento completo (puede estar en cualquier partida del asiento)
-            if (isset($basesByAsiento[$line->idasiento]) && $basesByAsiento[$line->idasiento] > 0) {
+            // sumar base imponible del asiento completo (puede estar en cualquier partida del asiento).
+            // En las facturas rectificativas la base es negativa, por lo que resta
+            if (isset($basesByAsiento[$line->idasiento]) && abs($basesByAsiento[$line->idasiento]) > 0.0) {
                 $baseImponible = $basesByAsiento[$line->idasiento];
                 static::$baseRetenciones += $baseImponible;
                 static::$recipientDetails[$codcontrapartida]['base'] += $baseImponible;

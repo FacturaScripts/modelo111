@@ -19,17 +19,22 @@
 
 namespace FacturaScripts\Test\Plugins;
 
+use FacturaScripts\Core\Lib\Calculator;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Asiento;
 use FacturaScripts\Dinamic\Model\Ejercicio;
+use FacturaScripts\Dinamic\Model\FacturaProveedor;
 use FacturaScripts\Dinamic\Model\Partida;
 use FacturaScripts\Dinamic\Model\Retencion;
 use FacturaScripts\Dinamic\Model\Subcuenta;
 use FacturaScripts\Plugins\Modelo111\Lib\Modelo111;
+use FacturaScripts\Test\Traits\RandomDataTrait;
 
 final class Modelo111Test extends Modelo111TestCase
 {
+    use RandomDataTrait;
+
     public function testEjercicioInexistente(): void
     {
         $this->assertSame([], Modelo111::generate('NO-EXISTE', 'T1'));
@@ -209,6 +214,109 @@ final class Modelo111Test extends Modelo111TestCase
         $this->assertArrayNotHasKey('4100000000', $result['recipientDetails']);
     }
 
+    /**
+     * Una factura de compra con retención y su rectificativa (que revierte la retención al debe)
+     * deben dar una retención neta de cero.
+     */
+    public function testRectificativaCompraRestaRetencion(): void
+    {
+        $exercise = $this->getCurrentExercise();
+
+        // retención del 15% sobre la subcuenta de IRPF de acreedores
+        $retencion = $this->getRetencion15();
+
+        $subject = $this->getRandomSupplier('Modelo111Test');
+        $this->assertTrue($subject->save());
+        $this->addCleanup(static function () use ($subject) {
+            $subject->delete();
+        });
+
+        // factura de 1000€ con 15% de retención: 150€ al haber de 4751
+        $invoice = new FacturaProveedor();
+        $invoice->setSubject($subject);
+        $this->assertTrue($invoice->save());
+        $line = $invoice->getNewLine();
+        $line->cantidad = 1;
+        $line->pvpunitario = 1000;
+        $line->irpf = $retencion->porcentaje;
+        $this->assertTrue($line->save());
+        $lines = $invoice->getLines();
+        $this->assertTrue(Calculator::calculate($invoice, $lines, true));
+        $this->addCleanup(static function () use ($invoice) {
+            $invoice->delete();
+        });
+
+        $before = Modelo111::generate($exercise->codejercicio, $this->getCurrentPeriod());
+        $this->assertEqualsWithDelta(150.0, $before['retencionesPracticadas'], 0.001);
+
+        // rectificativa de 500€: revierte 75€ de retención al debe de 4751
+        $refund = new FacturaProveedor();
+        $refund->setSubject($subject);
+        $refund->idfacturarect = $invoice->idfactura;
+        $refund->codigorect = $invoice->codigo;
+        $this->assertTrue($refund->save());
+        $refundLine = $refund->getNewLine();
+        $refundLine->cantidad = -1;
+        $refundLine->pvpunitario = 500;
+        $refundLine->irpf = $retencion->porcentaje;
+        $this->assertTrue($refundLine->save());
+        $refundLines = $refund->getLines();
+        $this->assertTrue(Calculator::calculate($refund, $refundLines, true));
+        $this->addCleanup(static function () use ($refund) {
+            $refund->delete();
+        });
+
+        $after = Modelo111::generate($exercise->codejercicio, $this->getCurrentPeriod());
+        $this->assertEqualsWithDelta(75.0, $after['retencionesPracticadas'], 0.001);
+        $this->assertEqualsWithDelta(75.0, $after['totalIngresar'], 0.001);
+        $this->assertEqualsWithDelta(75.0, $after['totalDebe'], 0.001);
+        $this->assertEqualsWithDelta(150.0, $after['totalHaber'], 0.001);
+    }
+
+    /**
+     * El debe de 4751 que no es de una factura (por ejemplo, el pago del modelo)
+     * no debe restar de las retenciones practicadas.
+     */
+    public function testDebeDePagoNoResta(): void
+    {
+        $exercise = $this->getCurrentExercise();
+        $this->createNominaAsiento($exercise, 1000.0, 150.0);
+
+        // pago del modelo: 4751 al debe, bancos (572) al haber
+        $asiento = new Asiento();
+        $asiento->codejercicio = $exercise->codejercicio;
+        $asiento->concepto = 'Pago de prueba';
+        $asiento->fecha = Tools::date();
+        $asiento->idempresa = $exercise->idempresa;
+        $asiento->importe = 150.0;
+        $this->assertTrue($asiento->save());
+        $this->addCleanup(static function () use ($asiento) {
+            if ($asiento->exists()) {
+                $asiento->delete();
+            }
+        });
+
+        $p1 = new Partida();
+        $p1->idasiento = $asiento->idasiento;
+        $p1->codsubcuenta = '4751000000';
+        $p1->debe = 150.0;
+        $p1->codcontrapartida = '5720000000';
+        $p1->concepto = $asiento->concepto;
+        $this->assertTrue($p1->save());
+
+        $p2 = new Partida();
+        $p2->idasiento = $asiento->idasiento;
+        $p2->codsubcuenta = '5720000000';
+        $p2->haber = 150.0;
+        $p2->codcontrapartida = '4751000000';
+        $p2->concepto = $asiento->concepto;
+        $this->assertTrue($p2->save());
+
+        $result = Modelo111::generate($exercise->codejercicio, $this->getCurrentPeriod());
+        $this->assertEqualsWithDelta(150.0, $result['retencionesPracticadas'], 0.001);
+        $this->assertEqualsWithDelta(150.0, $result['totalIngresar'], 0.001);
+    }
+
     public function testGenerateEntriesSinDatos(): void
     {
         $this->assertFalse(Modelo111::generateEntries([]));
@@ -257,6 +365,22 @@ final class Modelo111Test extends Modelo111TestCase
         $this->assertTrue($p3->save());
 
         return $asiento;
+    }
+
+    private function getRetencion15(): Retencion
+    {
+        $retencion = new Retencion();
+        if (false === $retencion->loadFromPercentage(15)) {
+            $retencion->codretencion = 'T111';
+            $retencion->descripcion = 'IRPF 15% test';
+            $retencion->porcentaje = 15;
+            $retencion->codsubcuentaacr = '4751000000';
+            $this->assertTrue($retencion->save());
+            $this->addCleanup(static function () use ($retencion) {
+                $retencion->delete();
+            });
+        }
+        return $retencion;
     }
 
     private function getCurrentExercise(): Ejercicio
