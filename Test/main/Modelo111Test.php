@@ -24,6 +24,7 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Asiento;
 use FacturaScripts\Dinamic\Model\Ejercicio;
+use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
 use FacturaScripts\Dinamic\Model\Partida;
 use FacturaScripts\Dinamic\Model\Retencion;
@@ -248,6 +249,7 @@ final class Modelo111Test extends Modelo111TestCase
 
         $before = Modelo111::generate($exercise->codejercicio, $this->getCurrentPeriod());
         $this->assertEqualsWithDelta(150.0, $before['retencionesPracticadas'], 0.001);
+        $this->assertEqualsWithDelta(1000.0, $before['baseRetenciones'], 0.001);
 
         // rectificativa de 500€: revierte 75€ de retención al debe de 4751
         $refund = new FacturaProveedor();
@@ -268,9 +270,59 @@ final class Modelo111Test extends Modelo111TestCase
 
         $after = Modelo111::generate($exercise->codejercicio, $this->getCurrentPeriod());
         $this->assertEqualsWithDelta(75.0, $after['retencionesPracticadas'], 0.001);
+        $this->assertEqualsWithDelta(500.0, $after['baseRetenciones'], 0.001);
         $this->assertEqualsWithDelta(75.0, $after['totalIngresar'], 0.001);
         $this->assertEqualsWithDelta(75.0, $after['totalDebe'], 0.001);
         $this->assertEqualsWithDelta(150.0, $after['totalHaber'], 0.001);
+    }
+
+    /**
+     * Una factura de venta con retención (473 al debe) no es una retención practicada
+     * por el declarante, por lo que no debe alterar el modelo 111.
+     */
+    public function testVentaConRetencionNoAltera(): void
+    {
+        $exercise = $this->getCurrentExercise();
+        $this->createNominaAsiento($exercise, 1000.0, 150.0);
+
+        // retención del 13% con subcuenta de ventas (473), para que sus líneas entren en el modelo
+        $retencion = new Retencion();
+        $retencion->codretencion = 'T111V';
+        $retencion->descripcion = 'IRPF 13% test ventas';
+        $retencion->porcentaje = 13;
+        $retencion->codsubcuentaacr = '4751000000';
+        $retencion->codsubcuentaret = '4730000000';
+        $this->assertTrue($retencion->save());
+        $this->addCleanup(static function () use ($retencion) {
+            $retencion->delete();
+        });
+
+        $before = Modelo111::generate($exercise->codejercicio, $this->getCurrentPeriod());
+
+        $customer = $this->getRandomCustomer('Modelo111Test');
+        $this->assertTrue($customer->save());
+        $this->addCleanup(static function () use ($customer) {
+            $customer->delete();
+        });
+
+        $invoice = new FacturaCliente();
+        $invoice->setSubject($customer);
+        $this->assertTrue($invoice->save());
+        $line = $invoice->getNewLine();
+        $line->cantidad = 1;
+        $line->pvpunitario = 1000;
+        $line->irpf = $retencion->porcentaje;
+        $this->assertTrue($line->save());
+        $lines = $invoice->getLines();
+        $this->assertTrue(Calculator::calculate($invoice, $lines, true));
+        $this->addCleanup(static function () use ($invoice) {
+            $invoice->delete();
+        });
+
+        $after = Modelo111::generate($exercise->codejercicio, $this->getCurrentPeriod());
+        $this->assertGreaterThan(count($before['entryLines']), count($after['entryLines']), 'sale-line-not-loaded');
+        $this->assertEqualsWithDelta($before['retencionesPracticadas'], $after['retencionesPracticadas'], 0.001);
+        $this->assertEqualsWithDelta($before['totalIngresar'], $after['totalIngresar'], 0.001);
     }
 
     /**
@@ -367,6 +419,11 @@ final class Modelo111Test extends Modelo111TestCase
         return $asiento;
     }
 
+    /**
+     * Devuelve la retención del 15%, creándola (y programando su borrado) si no existe.
+     *
+     * @return Retencion
+     */
     private function getRetencion15(): Retencion
     {
         $retencion = new Retencion();
