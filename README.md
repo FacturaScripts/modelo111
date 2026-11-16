@@ -6,6 +6,12 @@ Muestra y genera los datos de ambos modelos desde el menú **Informes → Modelo
 
 Las retenciones de alquileres no se incluyen en el cálculo: asigna la cuenta especial **IRPFA** a la subcuenta de retenciones de alquileres (o a su cuenta) para que queden fuera, ya que corresponden al modelo 115.
 
+### Cómo se calcula
+- Se usan las partidas del periodo de las subcuentas de retenciones practicadas: las de la cuenta especial **IRPFPR** (4751) y las subcuentas de compras de las retenciones. Las subcuentas de ventas de las retenciones (473) no se incluyen, porque son retenciones que te practican tus clientes.
+- Las retenciones y las bases son netas: el haber de 4751 suma y el debe resta cuando revierte una retención, es decir, en los asientos de facturas de compra (rectificativas) y en los que tienen alguna partida de gastos (grupo 6), como la regularización de una nómina. La base de sueldos (640) también es neta: debe menos haber.
+- El debe de 4751 de los pagos o liquidaciones de las retenciones (asientos sin gastos) no resta, y su contrapartida no cuenta como perceptor.
+- Los asientos de obligación y pago que genera el propio plugin no se tienen en cuenta al volver a calcular el modelo.
+
 ## Documentación
 - [Cómo hacer el Modelo 111](https://facturascripts.com/publicaciones/como-hacer-el-modelo-111)
 - [Cómo hacer el Modelo 190](https://facturascripts.com/publicaciones/como-hacer-el-modelo-190)

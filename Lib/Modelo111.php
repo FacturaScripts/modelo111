@@ -31,11 +31,29 @@ use FacturaScripts\Dinamic\Model\Retencion;
 use FacturaScripts\Dinamic\Model\Subcuenta;
 
 /**
+ * Calcula los datos del modelo 111 (retenciones e ingresos a cuenta del trabajo y de actividades
+ * económicas) a partir de las partidas de las subcuentas de retenciones practicadas (4751) y genera
+ * los asientos de obligación y pago del modelo.
+ *
+ * Las retenciones se calculan por su importe neto: el haber suma y el debe de los asientos que revierten
+ * retenciones (facturas de compra rectificativas o asientos con gastos, como la regularización de una
+ * nómina) resta. Los pagos y liquidaciones de la retención y los asientos que genera el propio modelo
+ * no se tienen en cuenta.
+ *
  * @author Carlos Garcia Gomez <carlos@facturascripts.com>
  * @author Daniel Fernández Giménez <contacto@danielfg.es>
  */
 class Modelo111
 {
+    /** Sufijo del concepto del asiento de obligación que genera el modelo. */
+    public const ENTRY_CONCEPT_OBLIGATION = ' - Obligación';
+
+    /** Sufijo del concepto del asiento de pago que genera el modelo. */
+    public const ENTRY_CONCEPT_PAYMENT = ' - Pago';
+
+    /** Prefijo del concepto de los asientos de obligación y pago que genera el modelo. */
+    public const ENTRY_CONCEPT_PREFIX = 'Modelo 111 ';
+
     /** @var Partida[] */
     protected static $baseLines = [];
 
@@ -81,6 +99,15 @@ class Modelo111
     /** @var float */
     protected static $totalIngresar = 0.0;
 
+    /**
+     * Calcula los datos del modelo 111 del ejercicio y periodo indicados.
+     *
+     * @param string $codejercicio código del ejercicio
+     * @param string $period periodo: T1, T2, T3, T4 o ANNUAL (cualquier otro valor se trata como T1)
+     * @param float $ingresosAnteriores importe ingresado en declaraciones anteriores del mismo periodo
+     *
+     * @return array resultados del modelo o un array vacío si el ejercicio no existe
+     */
     public static function generate(string $codejercicio, string $period, float $ingresosAnteriores = 0.0): array
     {
         // comprobamos que el ejercicio existe
@@ -124,6 +151,14 @@ class Modelo111
         ];
     }
 
+    /**
+     * Genera los asientos de obligación y pago del modelo a partir de los resultados de generate().
+     * Estos asientos no se tienen en cuenta al volver a calcular el modelo.
+     *
+     * @param array $result resultados devueltos por generate()
+     *
+     * @return bool true si se han creado los dos asientos
+     */
     public static function generateEntries(array $result): bool
     {
         if (empty($result) || $result['totalIngresar'] <= 0) {
@@ -133,7 +168,7 @@ class Modelo111
 
         $exercise = $result['exercise'];
         $total = $result['totalIngresar'];
-        $concepto = 'Modelo 111 ' . $result['period'] . ' ' . date('Y', strtotime($exercise->fechainicio));
+        $concepto = static::ENTRY_CONCEPT_PREFIX . $result['period'] . ' ' . date('Y', strtotime($exercise->fechainicio));
 
         $sub4751 = static::findSubcuentaIRPFPR($exercise->codejercicio);
         if (null === $sub4751) {
@@ -157,12 +192,25 @@ class Modelo111
         $cod4751 = $sub4751->codsubcuenta;
         $cod572 = $sub572->codsubcuenta;
 
-        $accObl = static::createAsiento($concepto . ' - Obligación', $fecha, $total, $exercise, $cod465, $cod4751);
-        $accPag = static::createAsiento($concepto . ' - Pago', $fecha, $total, $exercise, $cod4751, $cod572);
+        $accObl = static::createAsiento($concepto . static::ENTRY_CONCEPT_OBLIGATION, $fecha, $total, $exercise, $cod465, $cod4751);
+        $accPag = static::createAsiento($concepto . static::ENTRY_CONCEPT_PAYMENT, $fecha, $total, $exercise, $cod4751, $cod572);
 
         return $accObl && $accPag;
     }
 
+    /**
+     * Crea un asiento de dos partidas por el total indicado, salvo que ya exista otro con el mismo concepto
+     * en el ejercicio.
+     *
+     * @param string $concepto concepto del asiento y de sus partidas
+     * @param string $fecha fecha del asiento
+     * @param float $total importe del asiento
+     * @param Ejercicio $exercise ejercicio del asiento
+     * @param string $codDebe subcuenta de la partida al debe
+     * @param string $codHaber subcuenta de la partida al haber
+     *
+     * @return bool true si se ha creado el asiento
+     */
     protected static function createAsiento(string $concepto, string $fecha, float $total, Ejercicio $exercise, string $codDebe, string $codHaber): bool
     {
         $asiento = new Asiento();
@@ -214,6 +262,15 @@ class Modelo111
         return true;
     }
 
+    /**
+     * Devuelve la subcuenta de remuneraciones pendientes de pago (465) usada como contrapartida en las
+     * retenciones o, en su defecto, la primera 465 del ejercicio.
+     *
+     * @param Partida[] $entryLines partidas de las retenciones
+     * @param string $codejercicio código del ejercicio
+     *
+     * @return string|null código de la subcuenta o null si no hay ninguna
+     */
     protected static function findCod465(array $entryLines, string $codejercicio): ?string
     {
         foreach ($entryLines as $line) {
@@ -233,6 +290,13 @@ class Modelo111
         return null;
     }
 
+    /**
+     * Devuelve la primera subcuenta de bancos (572) del ejercicio.
+     *
+     * @param string $codejercicio código del ejercicio
+     *
+     * @return Subcuenta|null
+     */
     protected static function findSubcuenta572(string $codejercicio): ?Subcuenta
     {
         $where = [
@@ -245,6 +309,13 @@ class Modelo111
         return null;
     }
 
+    /**
+     * Devuelve la primera subcuenta de la cuenta especial de retenciones practicadas (IRPFPR) del ejercicio.
+     *
+     * @param string $codejercicio código del ejercicio
+     *
+     * @return Subcuenta|null
+     */
     protected static function findSubcuentaIRPFPR(string $codejercicio): ?Subcuenta
     {
         $special = new CuentaEspecial();
@@ -257,6 +328,11 @@ class Modelo111
         return null;
     }
 
+    /**
+     * Inicializa el detalle de un perceptor (base y retención a cero) si todavía no existe.
+     *
+     * @param string $codContrapartida subcuenta del perceptor
+     */
     protected static function initRecipient(string $codContrapartida): void
     {
         if (isset(static::$recipientDetails[$codContrapartida])) {
@@ -283,34 +359,8 @@ class Modelo111
     }
 
     /**
-     * Devuelve los ids de los asientos de las líneas de retención que pertenecen a una factura de compra.
-     * En un asiento de factura de compra la retención va al haber, salvo en las rectificativas (importes
-     * negativos), que la revierten al debe. Los asientos de pago, de ventas (la retención de ventas va
-     * al debe de forma normal) u otros no se incluyen.
-     *
-     * @return array
+     * Carga las partidas de sueldos y salarios (640) de los asientos que tienen retenciones.
      */
-    protected static function loadInvoiceAsientos(): array
-    {
-        if (empty(static::$entryLines)) {
-            return [];
-        }
-
-        $asientosIds = [];
-        foreach (static::$entryLines as $line) {
-            $asientosIds[$line->idasiento] = $line->idasiento;
-        }
-
-        $invoiceAsientos = [];
-        $sql = 'SELECT idasiento FROM ' . FacturaProveedor::tableName()
-            . ' WHERE idasiento IN (' . implode(',', $asientosIds) . ')';
-        foreach (static::$dataBase->select($sql) as $row) {
-            $invoiceAsientos[$row['idasiento']] = $row['idasiento'];
-        }
-
-        return $invoiceAsientos;
-    }
-
     protected static function loadBaseLines(): void
     {
         if (empty(static::$exercise->id()) || empty(static::$entryLines)) {
@@ -351,6 +401,12 @@ class Modelo111
         }
     }
 
+    /**
+     * Devuelve la suma de las bases imponibles de cada asiento con retenciones. En las facturas
+     * rectificativas la base es negativa.
+     *
+     * @return array bases indexadas por el id del asiento
+     */
     protected static function loadBasesByAsiento(): array
     {
         if (empty(static::$entryLines)) {
@@ -375,6 +431,9 @@ class Modelo111
         return $basesByAsiento;
     }
 
+    /**
+     * Calcula las fechas de inicio y fin del periodo del modelo.
+     */
     protected static function loadDates(): void
     {
         // si el periodo no es T1, T2, T3, T4 o Annual, se asume que es el primer trimestre
@@ -410,6 +469,11 @@ class Modelo111
         }
     }
 
+    /**
+     * Carga las partidas del periodo de las subcuentas de retenciones practicadas: las de la cuenta especial
+     * IRPFPR y las subcuentas de compras de las retenciones, sin las de alquileres (IRPFA, modelo 115) ni
+     * los asientos de obligación y pago que genera el propio modelo.
+     */
     protected static function loadEntryLines(): void
     {
         // obtenemos el listado de subcuentas de IRPF del ejercicio
@@ -427,27 +491,19 @@ class Modelo111
             }
         }
 
-        // añadimos las de las retenciones
+        // añadimos las subcuentas de compras de las retenciones. Las de ventas (codsubcuentaret, 473) son
+        // retenciones que nos practican nuestros clientes, no retenciones practicadas, y no van al modelo 111
         foreach (Retencion::all() as $retention) {
-            $subcuenta = new Subcuenta();
+            if (empty($retention->codsubcuentaacr)) {
+                continue;
+            }
 
-            // subcuenta para compras
+            $subcuenta = new Subcuenta();
             $whereAcr = [
                 Where::eq('codejercicio', static::$exercise->codejercicio),
                 Where::eq('codsubcuenta', $retention->codsubcuentaacr)
             ];
-            if ($retention->codsubcuentaacr && $subcuenta->loadWhere($whereAcr) &&
-                $subcuenta->getSpecialAccountCode() !== 'IRPFA') {
-                $ids[$subcuenta->id()] = $subcuenta->id();
-            }
-
-            // subcuenta para ventas
-            $whereRet = [
-                Where::eq('codejercicio', static::$exercise->codejercicio),
-                Where::eq('codsubcuenta', $retention->codsubcuentaret)
-            ];
-            if ($retention->codsubcuentaret && $subcuenta->loadWhere($whereRet) &&
-                $subcuenta->getSpecialAccountCode() !== 'IRPFA') {
+            if ($subcuenta->loadWhere($whereAcr) && $subcuenta->getSpecialAccountCode() !== 'IRPFA') {
                 $ids[$subcuenta->id()] = $subcuenta->id();
             }
         }
@@ -455,18 +511,25 @@ class Modelo111
             return;
         }
 
+        // excluimos los asientos de obligación y pago que genera el propio modelo
         $sql = 'SELECT * FROM ' . Partida::tableName() . ' as p'
             . ' LEFT JOIN ' . Asiento::tableName() . ' as a ON p.idasiento = a.idasiento'
             . ' WHERE a.codejercicio = ' . static::$dataBase->var2str(static::$exercise->codejercicio)
             . ' AND a.fecha BETWEEN ' . static::$dataBase->var2str(static::$dateStart)
             . ' AND ' . static::$dataBase->var2str(static::$dateEnd)
             . ' AND p.idsubcuenta IN (' . implode(',', $ids) . ')'
+            . ' AND a.concepto NOT LIKE ' . static::$dataBase->var2str(static::ENTRY_CONCEPT_PREFIX . '%' . static::ENTRY_CONCEPT_OBLIGATION)
+            . ' AND a.concepto NOT LIKE ' . static::$dataBase->var2str(static::ENTRY_CONCEPT_PREFIX . '%' . static::ENTRY_CONCEPT_PAYMENT)
             . ' ORDER BY a.fecha ASC, a.numero ASC';
         foreach (static::$dataBase->select($sql) as $row) {
             static::$entryLines[] = new Partida($row);
         }
     }
 
+    /**
+     * Calcula las casillas del modelo (perceptores, base, retenciones y total a ingresar), el detalle
+     * por perceptor y los totales del debe y del haber de las partidas de retenciones.
+     */
     protected static function loadResults(): void
     {
         $recipients = [];
@@ -477,8 +540,8 @@ class Modelo111
         // obtener bases imponibles de los asientos con retenciones
         $basesByAsiento = static::loadBasesByAsiento();
 
-        // asientos de facturas de compra: su debe son retenciones revertidas por facturas rectificativas
-        $invoiceAsientos = static::loadInvoiceAsientos();
+        // asientos cuyo debe revierte retenciones (rectificativas de compra, regularizaciones de nóminas...)
+        $reversalAsientos = static::loadReversalAsientos();
 
         // calculamos las retenciones practicadas (casilla 03) y los perceptores
         foreach (static::$entryLines as $line) {
@@ -487,13 +550,16 @@ class Modelo111
                 continue;
             }
 
+            // retención neta: el haber suma y el debe de los asientos que revierten retenciones resta
+            $isReversal = isset($reversalAsientos[$line->idasiento]);
+            if (false === $isReversal && $line->haber == 0.0) {
+                // debe de un pago o liquidación de las retenciones: no es una retención ni un perceptor
+                continue;
+            }
+
             $recipients[$codcontrapartida] = $codcontrapartida;
 
-            // retención neta: el haber suma y el debe de las facturas de compra rectificativas resta
-            $retencionNeta = $line->haber;
-            if (isset($invoiceAsientos[$line->idasiento])) {
-                $retencionNeta -= $line->debe;
-            }
+            $retencionNeta = $isReversal ? $line->haber - $line->debe : $line->haber;
             static::$retencionesPracticadas += $retencionNeta;
 
             // inicializar perceptor si no existe
@@ -513,20 +579,22 @@ class Modelo111
             }
         }
 
-        // calculamos la base de retenciones de sueldos y salarios (casilla 02) y la agrupamos por perceptor
+        // calculamos la base de retenciones de sueldos y salarios (casilla 02) y la agrupamos por perceptor.
+        // La base es neta: el debe suma y el haber (regularización o anulación de una nómina) resta
         foreach (static::$baseLines as $line) {
             $codcontrapartida = $line->codcontrapartida;
             if (empty($codcontrapartida)) {
                 continue;
             }
 
-            static::$baseRetenciones += $line->debe;
+            $baseNeta = $line->debe - $line->haber;
+            static::$baseRetenciones += $baseNeta;
 
             // inicializar perceptor si no existe
             static::initRecipient($codcontrapartida);
 
             // sumar base de sueldos
-            static::$recipientDetails[$codcontrapartida]['base'] += $line->debe;
+            static::$recipientDetails[$codcontrapartida]['base'] += $baseNeta;
         }
 
         // calcular totales debe/haber de entryLines
@@ -544,5 +612,47 @@ class Modelo111
 
         // ordenar por código de contrapartida
         ksort(static::$recipientDetails);
+    }
+
+    /**
+     * Devuelve los ids de los asientos de las líneas de retención cuyo debe revierte retenciones practicadas:
+     * - los de facturas de compra, cuyas rectificativas (importes negativos) llevan la retención al debe;
+     * - los que tienen una partida de gastos (grupo 6), como la regularización de una nómina o una
+     *   rectificativa de compra registrada con un asiento manual.
+     *
+     * Los asientos de pago o liquidación de las retenciones (4751 al debe contra tesorería u otra cuenta
+     * de balance) no tienen gastos, por lo que no se incluyen y su debe no resta.
+     *
+     * @return array ids de los asientos, indexados por su id
+     */
+    protected static function loadReversalAsientos(): array
+    {
+        if (empty(static::$entryLines)) {
+            return [];
+        }
+
+        $asientosIds = [];
+        foreach (static::$entryLines as $line) {
+            $asientosIds[$line->idasiento] = (int)$line->idasiento;
+        }
+
+        $reversalAsientos = [];
+
+        // asientos de facturas de compra
+        $sql = 'SELECT idasiento FROM ' . FacturaProveedor::tableName()
+            . ' WHERE idasiento IN (' . implode(',', $asientosIds) . ')';
+        foreach (static::$dataBase->select($sql) as $row) {
+            $reversalAsientos[$row['idasiento']] = $row['idasiento'];
+        }
+
+        // asientos con alguna partida de gastos (grupo 6)
+        $sql = 'SELECT DISTINCT idasiento FROM ' . Partida::tableName()
+            . ' WHERE idasiento IN (' . implode(',', $asientosIds) . ')'
+            . ' AND codsubcuenta LIKE ' . static::$dataBase->var2str('6%');
+        foreach (static::$dataBase->select($sql) as $row) {
+            $reversalAsientos[$row['idasiento']] = $row['idasiento'];
+        }
+
+        return $reversalAsientos;
     }
 }
