@@ -1,0 +1,17 @@
+{
+    "accounting-created-111": "Boekingspost aangemaakt in boekjaar %codejercicio% met als omschrijving: %concepto%",
+    "annual-190": "Jaarlijks (Model 190)",
+    "download-xlsx": "Excel downloaden",
+    "exists-accounting-111": "Er bestaat al een boeking in boekjaar %codejercicio% met de omschrijving: %concepto%",
+    "generate-entries": "Boekingen genereren",
+    "model-111": "Model 111",
+    "model-111-190": "Modellen 111 en 190",
+    "model-111-p": "Model 111 is een driemaandelijkse aangifte van de ingehouden inkomstenbelasting op werknemers, professionals en ondernemers.",
+    "model-190": "Model 190",
+    "model-190-p": "Model 190 is een jaarlijkse aangifte van de ingehouden inkomstenbelasting op werknemers, beroepsbeoefenaars en ondernemers.",
+    "previous-period-income": "Inkomsten van de vorige periode",
+    "recipients-detail": "Ontvangers",
+    "total-to-enter": "In te voeren totaal",
+    "withholding-base": "Grondslag voor inhoudingen",
+    "withholdings-made": "Toegepaste inhoudingen"
+}

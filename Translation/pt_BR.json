@@ -1,7 +1,6 @@
 {
     "accounting-created-111": "Lançamento criado no exercício %codejercicio% com o conceito: %concepto%",
     "annual-190": "Anual (Modelo 190)",
-    "download-csv": "Descargar CSV",
     "download-xlsx": "Baixar Excel",
     "exists-accounting-111": "Já existe um lançamento no exercício %codejercicio% com o conceito: %concepto%",
     "generate-entries": "Gerar lançamentos",
@@ -11,7 +10,6 @@
     "model-190": "Modelo 190",
     "model-190-p": "O Modelo 190 é uma declaração anual das retenções do IRPF aplicadas a trabalhadores, profissionais e empresários.",
     "previous-period-income": "Receitas do período anterior",
-    "recipient": "Destinatário",
     "recipients-detail": "Destinatários",
     "total-to-enter": "Total a inserir",
     "withholding-base": "Base de retenção",

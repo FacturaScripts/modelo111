@@ -1,7 +1,6 @@
 {
     "accounting-created-111": "Účetní zápis vytvořen v účetním období %codejercicio% s popisem: %concepto%",
     "annual-190": "Ročně (Formulář 190)",
-    "download-csv": "Descargar CSV",
     "download-xlsx": "Stáhnout Excel",
     "exists-accounting-111": "V účetním období %codejercicio% již existuje zápis s popisem: %concepto%",
     "generate-entries": "Generovat účetní zápisy",
@@ -11,7 +10,6 @@
     "model-190": "Model 190",
     "model-190-p": "Formulář 190 je každoroční hlášení o zdanění příjmů z práce, profesních a podnikatelských výkonů.",
     "previous-period-income": "Příjmy z předchozího období",
-    "recipient": "Příjemce",
     "recipients-detail": "Příjemci",
     "total-to-enter": "Celkem k zadání",
     "withholding-base": "Základ pro srážky",

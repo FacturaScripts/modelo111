@@ -1,7 +1,6 @@
 {
     "accounting-created-111": "Sarrera sortu da %codejercicio% ekitaldian, kontzeptua: %concepto%",
     "annual-190": "Urtekaria (190 eredua)",
-    "download-csv": "Descargar CSV",
     "download-xlsx": "Excel deskargatu",
     "exists-accounting-111": "Jadanik badago kontu-sarrera bat %codejercicio% ekitaldian honako kontzeptuarekin: %concepto%",
     "generate-entries": "Sortu idazpenak",
@@ -11,7 +10,6 @@
     "model-190": "Modelo 190",
     "model-190-p": "190. eredua IRPF-ren kasuetan konturaturiko kutxak adinaren arabera errazten ditu.",
     "previous-period-income": "Aurreko epeko diru-sarrerak",
-    "recipient": "Jasotzailea",
     "recipients-detail": "Jasotzaileak",
     "total-to-enter": "Sartu beharreko guztira",
     "withholding-base": "Atxikipenen oinarria",

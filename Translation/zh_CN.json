@@ -1,0 +1,17 @@
+{
+    "accounting-created-111": "已在会计年度 %codejercicio% 中创建凭证，摘要为：%concepto%",
+    "annual-190": "年度（190 表）",
+    "download-xlsx": "下载 Excel",
+    "exists-accounting-111": "会计年度 %codejercicio% 中已存在摘要为 %concepto% 的凭证",
+    "generate-entries": "生成凭证",
+    "model-111": "111 表",
+    "model-111-190": "111 表和 190 表",
+    "model-111-p": "111 表是对员工、专业人士和企业主所预扣个人所得税的季度申报。",
+    "model-190": "190 表",
+    "model-190-p": "190 表是对员工、专业人士和企业主所预扣个人所得税的年度申报。",
+    "previous-period-income": "上一期间收入",
+    "recipients-detail": "收款人",
+    "total-to-enter": "应缴合计",
+    "withholding-base": "预扣基数",
+    "withholdings-made": "已预扣"
+}

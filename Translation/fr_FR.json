@@ -1,7 +1,6 @@
 {
     "accounting-created-111": "Écriture créée dans l'exercice %codejercicio% avec le libellé : %concepto%",
     "annual-190": "Annuel (Modèle 190)",
-    "download-csv": "Descargar CSV",
     "download-xlsx": "Télécharger Excel",
     "exists-accounting-111": "Il existe déjà une écriture dans l'exercice %codejercicio% avec le libellé : %concepto%",
     "generate-entries": "Générer des écritures",
@@ -11,7 +10,6 @@
     "model-190": "Modèle 190",
     "model-190-p": "Le Modèle 190 est une déclaration annuelle des retenues IRPF pratiquées sur les travailleurs, professionnels et les entrepreneurs.",
     "previous-period-income": "Revenus de la période précédente",
-    "recipient": "Bénéficiaire",
     "recipients-detail": "Destinataires",
     "total-to-enter": "Total à saisir",
     "withholding-base": "Base des retenues",

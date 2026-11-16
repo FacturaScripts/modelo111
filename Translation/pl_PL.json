@@ -1,7 +1,6 @@
 {
     "accounting-created-111": "Wpis księgowy utworzony w okresie %codejercicio% z opisem: %concepto%",
     "annual-190": "Roczne (Formularz 190)",
-    "download-csv": "Descargar CSV",
     "download-xlsx": "Pobierz plik Excel",
     "exists-accounting-111": "Istnieje już zapis w roku %codejercicio% z opisem: %concepto%",
     "generate-entries": "Generuj zapisy",
@@ -11,7 +10,6 @@
     "model-190": "Model 190",
     "model-190-p": "Formularz 190 jest rocznym oświadczeniem o pobranych zaliczkach na podatek dochodowy od wynagrodzeń pracowników, profesjonalistów i przedsiębiorców.",
     "previous-period-income": "Przychody z poprzedniego okresu",
-    "recipient": "Odbiorca",
     "recipients-detail": "Odbiorcy",
     "total-to-enter": "Kwota do wpłaty",
     "withholding-base": "Podstawa potrąceń",

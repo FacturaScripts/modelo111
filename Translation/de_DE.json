@@ -1,7 +1,6 @@
 {
     "accounting-created-111": "Buchungssatz im Geschäftsjahr %codejercicio% erstellt mit dem Verwendungszweck: %concepto%",
     "annual-190": "Jährlich (Model 190)",
-    "download-csv": "Descargar CSV",
     "download-xlsx": "Excel herunterladen",
     "exists-accounting-111": "Es existiert bereits ein Buchungssatz im Geschäftsjahr %codejercicio% mit dem Verwendungszweck: %concepto%",
     "generate-entries": "Buchungssätze erstellen",
@@ -11,7 +10,6 @@
     "model-190": "Modell 190",
     "model-190-p": "Das Modell 190 ist eine jährliche Erklärung der von der IRPF an Arbeitnehmer, Experten und Unternehmer vorgenommenen Abzüge.",
     "previous-period-income": "Einnahmen des vorherigen Zeitraums",
-    "recipient": "Empfänger",
     "recipients-detail": "Empfänger",
     "total-to-enter": "Einzugebender Gesamtbetrag",
     "withholding-base": "Bemessungsgrundlage für Einbehalte",

@@ -1,7 +1,6 @@
 {
     "accounting-created-111": "Registrazione creata nell'esercizio %codejercicio% con la causale: %concepto%",
     "annual-190": "Annuale (Modello 190)",
-    "download-csv": "Descargar CSV",
     "download-xlsx": "Scarica Excel",
     "exists-accounting-111": "Esiste già una registrazione nell'esercizio %codejercicio% con la causale: %concepto%",
     "generate-entries": "Genera registrazioni contabili",
@@ -11,7 +10,6 @@
     "model-190": "Modello 190",
     "model-190-p": "Il Modello 190 è una dichiarazione annuale delle ritenute IRPF applicate a lavoratori, professionisti e imprenditori.",
     "previous-period-income": "Ricavi del periodo precedente",
-    "recipient": "Percettore",
     "recipients-detail": "Destinatari",
     "total-to-enter": "Totale da inserire",
     "withholding-base": "Base delle ritenute",

@@ -1,7 +1,6 @@
 {
     "accounting-created-111": "Asiento creado en el ejercicio %codejercicio% con el concepto: %concepto%",
     "annual-190": "Anual (Modelo 190)",
-    "download-csv": "Descargar CSV",
     "download-xlsx": "Descargar Excel",
     "exists-accounting-111": "Ya existe un asiento en el ejercicio %codejercicio% con el concepto: %concepto%",
     "generate-entries": "Generar asientos",
@@ -11,7 +10,6 @@
     "model-190": "Modelo 190",
     "model-190-p": "El Modelo 190 es una declaración anual de las retenciones del IRPF practicadas a trabajadores, profesionales y empresarios.",
     "previous-period-income": "Ingresos del periodo anterior",
-    "recipient": "Perceptor",
     "recipients-detail": "Perceptores",
     "total-to-enter": "Total a ingresar",
     "withholding-base": "Base de retenciones",
