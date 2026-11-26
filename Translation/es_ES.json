@@ -122,10 +122,10 @@
     "model-111-p": "El Modelo 111 es una declaración trimestral de las retenciones del IRPF practicadas a trabajadores, profesionales y empresarios.",
     "model-190": "Modelo 190",
     "model-190-p": "El Modelo 190 es una declaración anual de las retenciones del IRPF practicadas a trabajadores, profesionales y empresarios.",
-    "previous-period-income": "Ingresado en autoliquidaciones anteriores (se resta)",
+    "previous-period-income": "Ingresos del periodo anterior",
     "recipients-detail": "Perceptores",
+    "taxation-spain": "Fiscalidad España",
     "total-to-enter": "Total a ingresar",
     "withholding-base": "Base de retenciones",
-    "withholdings-made": "Retenciones practicadas",
-    "taxation-spain": "Fiscalidad España"
+    "withholdings-made": "Retenciones practicadas"
 }
