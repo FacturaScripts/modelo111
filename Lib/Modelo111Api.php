@@ -28,8 +28,9 @@ use FacturaScripts\Dinamic\Lib\Modelo190;
  * su propio endpoint, GET /api/3/modelo190 (Modelo190Api).
  *
  * Parámetros comunes: codejercicio, idempresa, anio, periodo (T1-T4, obligatorio) y detalle.
- * Parámetro propio: ingresos_anteriores (float, 0 por defecto): lo ya ingresado en autoliquidaciones
- * anteriores del mismo periodo (casilla 29), que se resta de las retenciones igual que en la pantalla.
+ * Parámetro propio: ingresos_anteriores (float positivo o 0, 0 por defecto): lo ya ingresado en
+ * autoliquidaciones anteriores del mismo periodo (casilla 29), que se resta de las retenciones igual que en
+ * la pantalla. Un valor negativo o que no sea un número devuelve el error 400 invalid-parameter.
  *
  * No crea, modifica ni borra registros.
  *
@@ -68,7 +69,8 @@ class Modelo111Api
 
         // comprobamos los parámetros propios
         $ingresosAnteriores = static::parseFloat($params['ingresos_anteriores'] ?? null);
-        if (null === $ingresosAnteriores) {
+        if (null === $ingresosAnteriores || $ingresosAnteriores < 0) {
+            // la casilla 29 es lo ya ingresado y se resta: no admite importes negativos
             return static::error(400, 'invalid-parameter', ['parameter' => 'ingresos_anteriores']);
         }
 

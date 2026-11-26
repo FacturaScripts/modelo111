@@ -2,7 +2,7 @@
 Plugin para FacturaScripts con los modelos 111 y 190 para la hacienda española.
 - https://facturascripts.com/plugins/modelo111
 
-Muestra y genera los datos de ambos modelos desde el menú **Informes → Modelos fiscales → Modelos 111 y 190**, con descarga de los ficheros de presentación de la AEAT (.111 en los trimestres y .190 en el anual), Excel y CSV, impresión y generación de los asientos de obligación y pago.
+Muestra y genera los datos de ambos modelos desde el menú **Informes → Modelos fiscales → Modelos 111 y 190**, con descarga de los ficheros de presentación de la AEAT (.111 en los trimestres y .190 en el anual), Excel, impresión y generación de los asientos de obligación y pago.
 
 Las retenciones de alquileres no se incluyen en el cálculo: asigna la cuenta especial **IRPFA** a la subcuenta de retenciones de alquileres (o a su cuenta) para que queden fuera, ya que corresponden al modelo 115.
 
@@ -29,7 +29,7 @@ Cada modelo tiene la misma estructura: una clase de cálculo, una de respuesta d
 
 Las dos clases de la API comparten `Lib/Modelo111ApiTrait` (empresa, ejercicio, periodo, perceptores y avisos) y los dos ficheros, `Lib/Modelo111FileTrait` (formato de los campos). Son traits para que no se desplieguen en `Dinamic/Lib`.
 
-- `GET /api/3/modelo111`: `periodo` T1-T4 (obligatorio), `codejercicio` o `idempresa` y `anio`, `detalle` (perceptores y partidas) e `ingresos_anteriores` (casilla 29). Devuelve el resumen, las casillas 01-30 y el resultado (casilla 30).
+- `GET /api/3/modelo111`: `periodo` T1-T4 (obligatorio), `codejercicio` o `idempresa` y `anio`, `detalle` (perceptores y partidas) e `ingresos_anteriores` (casilla 29, positivo o 0). Devuelve el resumen, las casillas 01-30 y el resultado (casilla 30).
 - `GET /api/3/modelo190`: `periodo` opcional (solo `ANUAL`), `codejercicio` o `idempresa` y `anio`, y `detalle` (partidas). Devuelve el resumen (registros, totales y errores que impiden generar el fichero), las casillas 01-03 del resumen y siempre el detalle por perceptor. Es informativo: `resultado` vale `null`.
 
 Una clave API sin acceso completo necesita el permiso de lectura del recurso `modelo111` o `modelo190`.

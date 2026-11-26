@@ -203,6 +203,12 @@ trait Modelo111ApiTrait
                 . ' de trabajo y profesionales, por lo que pueden contarse aquí y también en el modelo 115.';
         }
 
+        if (false === empty($result['partialPeriod'])) {
+            $warnings[] = 'El ejercicio ' . $exercise->codejercicio . ' no abarca el periodo natural completo: solo'
+                . ' se tienen en cuenta las partidas del ' . static::isoDate($result['dateStart']) . ' al '
+                . static::isoDate($result['dateEnd']) . '.';
+        }
+
         if (empty($result['numRecipients'])) {
             $warnings[] = 'No hay retenciones practicadas en el periodo.';
         }

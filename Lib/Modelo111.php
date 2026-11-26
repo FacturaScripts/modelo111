@@ -74,17 +74,20 @@ class Modelo111
     /** @var Partida[] */
     protected static $entryLines = [];
 
-    /** @var array perceptores, percepciones y retenciones de cada grupo de casillas del modelo 111 */
-    protected static $groups111 = [];
-
     /** @var Ejercicio */
     protected static $exercise;
+
+    /** @var array perceptores, percepciones y retenciones de cada grupo de casillas del modelo 111 */
+    protected static $groups111 = [];
 
     /** @var float */
     protected static $ingresosPeriodoAnterior = 0.0;
 
     /** @var int */
     protected static $numRecipients = 0;
+
+    /** @var bool true si el periodo natural no cabe entero en el ejercicio y se ha limitado a sus fechas */
+    protected static $partialPeriod = false;
 
     /** @var string */
     protected static $period = '';
@@ -107,6 +110,9 @@ class Modelo111
     /** @var float base de sueldos (640) que no se ha podido asignar a ningún perceptor */
     protected static $unassignedBase = 0.0;
 
+    /** @var int año natural del modelo (el de la declaración y sus ficheros) */
+    protected static $year = 0;
+
     /**
      * Calcula los datos del modelo 111 del ejercicio y periodo indicados.
      *
@@ -115,10 +121,12 @@ class Modelo111
      * @param float $ingresosAnteriores importe ya ingresado en autoliquidaciones anteriores del mismo periodo
      *                                  (casilla 29), que se resta de las retenciones
      *
-     * @return array resultados del modelo (con las fechas del periodo, dateStart y dateEnd, en formato d-m-Y),
-     *               el detalle por perceptor (recipientDetails, con los datos del modelo 190), los totales por
-     *               grupo de casillas del modelo 111 (groups111) y la base de sueldos sin perceptor
-     *               (unassignedBase), o un array vacío si el ejercicio no existe
+     * @return array resultados del modelo (con las fechas del periodo, dateStart y dateEnd, en formato d-m-Y,
+     *               limitadas a las del ejercicio; el año natural del modelo, year, y si el periodo se ha
+     *               recortado porque el ejercicio no lo abarca entero, partialPeriod), el detalle por perceptor
+     *               (recipientDetails, con los datos del modelo 190), los totales por grupo de casillas del
+     *               modelo 111 (groups111) y la base de sueldos sin perceptor (unassignedBase), o un array vacío
+     *               si el ejercicio no existe
      */
     public static function generate(string $codejercicio, string $period, float $ingresosAnteriores = 0.0): array
     {
@@ -164,11 +172,14 @@ class Modelo111
             'totalDebe' => static::$totalDebe,
             'totalHaber' => static::$totalHaber,
             'totalIngresar' => static::$totalIngresar,
+            'year' => static::$year,
+            'partialPeriod' => static::$partialPeriod,
         ];
     }
 
     /**
-     * Genera los asientos de obligación y pago del modelo a partir de los resultados de generate().
+     * Genera los asientos de obligación y pago del modelo a partir de los resultados de generate() de un
+     * trimestre. El periodo anual (modelo 190) es informativo y no se ingresa, así que no genera asientos.
      * Estos asientos no se tienen en cuenta al volver a calcular el modelo.
      *
      * @param array $result resultados devueltos por generate()
@@ -182,9 +193,14 @@ class Modelo111
             return false;
         }
 
+        if ($result['period'] === 'ANNUAL') {
+            Tools::log()->warning('m111-entries-quarter-only');
+            return false;
+        }
+
         $exercise = $result['exercise'];
         $total = $result['totalIngresar'];
-        $concepto = static::ENTRY_CONCEPT_PREFIX . $result['period'] . ' ' . date('Y', strtotime($exercise->fechainicio));
+        $concepto = static::ENTRY_CONCEPT_PREFIX . $result['period'] . ' ' . $result['year'];
 
         $sub4751 = static::findSubcuentaIRPFPR($exercise->codejercicio);
         if (null === $sub4751) {
@@ -519,37 +535,40 @@ class Modelo111
      */
     protected static function loadDates(): void
     {
-        // si el periodo no es T1, T2, T3, T4 o Annual, se asume que es el primer trimestre
+        // si el periodo no es T1, T2, T3, T4 o ANNUAL, se asume que es el primer trimestre
         if (!in_array(static::$period, ['T1', 'T2', 'T3', 'T4', 'ANNUAL'])) {
             static::$period = 'T1';
         }
 
-        switch (static::$period) {
-            case 'T1':
-                static::$dateStart = date('01-01-Y', strtotime(static::$exercise->fechainicio));
-                static::$dateEnd = date('31-03-Y', strtotime(static::$exercise->fechainicio));
-                break;
+        // meses de inicio y fin del periodo dentro del año natural
+        [$monthStart, $monthEnd] = match (static::$period) {
+            'T2' => [4, 6],
+            'T3' => [7, 9],
+            'T4' => [10, 12],
+            'ANNUAL' => [1, 12],
+            default => [1, 3],
+        };
 
-            case 'T2':
-                static::$dateStart = date('01-04-Y', strtotime(static::$exercise->fechainicio));
-                static::$dateEnd = date('30-06-Y', strtotime(static::$exercise->fechainicio));
+        // los modelos 111 y 190 van por año natural: el año es el primero del ejercicio en el que el periodo
+        // tiene algún día, para que los trimestres de un ejercicio que no empieza en enero caigan dentro de él
+        $exerciseStart = strtotime(static::$exercise->fechainicio);
+        $exerciseEnd = strtotime(static::$exercise->fechafin);
+        $year = (int)date('Y', $exerciseStart);
+        for ($candidate = $year; $candidate <= (int)date('Y', $exerciseEnd); $candidate++) {
+            $end = strtotime(date('Y-m-t', mktime(0, 0, 0, $monthEnd, 1, $candidate)));
+            if ($end >= $exerciseStart) {
+                $year = $candidate;
                 break;
-
-            case 'T3':
-                static::$dateStart = date('01-07-Y', strtotime(static::$exercise->fechainicio));
-                static::$dateEnd = date('30-09-Y', strtotime(static::$exercise->fechainicio));
-                break;
-
-            case 'ANNUAL':
-                static::$dateStart = date('01-01-Y', strtotime(static::$exercise->fechainicio));
-                static::$dateEnd = date('31-12-Y', strtotime(static::$exercise->fechainicio));
-                break;
-
-            default:
-                static::$dateStart = date('01-10-Y', strtotime(static::$exercise->fechainicio));
-                static::$dateEnd = date('31-12-Y', strtotime(static::$exercise->fechainicio));
-                break;
+            }
         }
+
+        // el periodo natural se limita a las fechas del ejercicio, que es de donde se leen las partidas
+        $start = mktime(0, 0, 0, $monthStart, 1, $year);
+        $end = strtotime(date('Y-m-t', mktime(0, 0, 0, $monthEnd, 1, $year)));
+        static::$year = $year;
+        static::$partialPeriod = $start < $exerciseStart || $end > $exerciseEnd;
+        static::$dateStart = date('d-m-Y', max($start, $exerciseStart));
+        static::$dateEnd = date('d-m-Y', min($end, $exerciseEnd));
     }
 
     /**
@@ -607,6 +626,37 @@ class Modelo111
         foreach (static::$dataBase->select($sql) as $row) {
             static::$entryLines[] = new Partida($row);
         }
+    }
+
+    /**
+     * Calcula los perceptores, percepciones y retenciones de cada grupo de casillas del modelo 111 según la
+     * clave de percepción de cada perceptor (trabajo 01-03, actividades económicas 07-09, premios 13-15,
+     * aprovechamientos forestales 19-21 y derechos de imagen 25-27). Solo se cuentan como perceptores los que
+     * tienen retenciones. La base de sueldos sin perceptor se suma a los rendimientos del trabajo.
+     *
+     * @param array $recipients claves de los perceptores con retenciones
+     */
+    protected static function loadGroups111(array $recipients): void
+    {
+        static::$groups111 = [];
+        foreach (array_keys(Modelo190::GROUPS_111) as $group) {
+            static::$groups111[$group] = ['perceptores' => 0, 'base' => 0.0, 'retenciones' => 0.0];
+        }
+
+        foreach (static::$recipientDetails as $key => $detail) {
+            $group = $detail['grupo111'];
+            if ($group === '') {
+                continue;
+            }
+
+            static::$groups111[$group]['base'] += $detail['base'];
+            static::$groups111[$group]['retenciones'] += $detail['retencion'];
+            if (isset($recipients[$key])) {
+                static::$groups111[$group]['perceptores']++;
+            }
+        }
+
+        static::$groups111[Modelo190::GROUP_WORK]['base'] += static::$unassignedBase;
     }
 
     /**
@@ -771,37 +821,6 @@ class Modelo111
         ksort(static::$recipientDetails);
 
         static::loadGroups111($recipients);
-    }
-
-    /**
-     * Calcula los perceptores, percepciones y retenciones de cada grupo de casillas del modelo 111 según la
-     * clave de percepción de cada perceptor (trabajo 01-03, actividades económicas 07-09, premios 13-15,
-     * aprovechamientos forestales 19-21 y derechos de imagen 25-27). Solo se cuentan como perceptores los que
-     * tienen retenciones. La base de sueldos sin perceptor se suma a los rendimientos del trabajo.
-     *
-     * @param array $recipients claves de los perceptores con retenciones
-     */
-    protected static function loadGroups111(array $recipients): void
-    {
-        static::$groups111 = [];
-        foreach (array_keys(Modelo190::GROUPS_111) as $group) {
-            static::$groups111[$group] = ['perceptores' => 0, 'base' => 0.0, 'retenciones' => 0.0];
-        }
-
-        foreach (static::$recipientDetails as $key => $detail) {
-            $group = $detail['grupo111'];
-            if ($group === '') {
-                continue;
-            }
-
-            static::$groups111[$group]['base'] += $detail['base'];
-            static::$groups111[$group]['retenciones'] += $detail['retencion'];
-            if (isset($recipients[$key])) {
-                static::$groups111[$group]['perceptores']++;
-            }
-        }
-
-        static::$groups111[Modelo190::GROUP_WORK]['base'] += static::$unassignedBase;
     }
 
     /**

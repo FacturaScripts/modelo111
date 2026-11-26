@@ -79,25 +79,27 @@
                                             <i class="fa-solid fa-file-excel me-1"></i> {{ trans('download-xlsx') }}
                                         </button>
                                     </li>
-                                    <li>
-                                        <button type="submit" name="action" value="download-csv"
-                                                class="dropdown-item">
-                                            <i class="fa-solid fa-file-csv me-1"></i> {{ trans('download-csv') }}
-                                        </button>
-                                    </li>
                                 </ul>
                             </div>
                             <button type="submit" name="action" value="print" formtarget="_blank"
                                     class="btn btn-secondary ms-2">
                                 <i class="fa-solid fa-print me-1"></i> {{ trans('print') }}
                             </button>
-                            <button type="submit" name="action" value="generate-entries" class="btn btn-secondary ms-2">
-                                <i class="fa-solid fa-receipt me-1"></i> {{ trans('generate-entries') }}
-                            </button>
+                            {# los asientos de obligación y pago solo se generan desde un trimestre: el 190 no se ingresa #}
+                            {% if not annual %}
+                                <button type="submit" name="action" value="generate-entries" class="btn btn-secondary ms-2">
+                                    <i class="fa-solid fa-receipt me-1"></i> {{ trans('generate-entries') }}
+                                </button>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>
             </div>
+            {% if fsc.result.partialPeriod is defined and fsc.result.partialPeriod %}
+                <div class="alert alert-warning">
+                    {{ trans('m111-partial-period', {'%start%': fsc.result.dateStart, '%end%': fsc.result.dateEnd}) }}
+                </div>
+            {% endif %}
             {% if fsc.result.entryLines is not empty %}
                 {% if annual %}
                     {{ block('summary190') }}
@@ -180,7 +182,7 @@
                         <div class="input-group">
                             <span class="input-group-text">29</span>
                             <input type="number" name="ingresosanteriores" value="{{ fsc.ingresosPeriodoAnterior }}"
-                                   class="form-control text-end" step="0.01"/>
+                                   class="form-control text-end" step="0.01" min="0"/>
                         </div>
                     </div>
                 </div>

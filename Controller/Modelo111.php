@@ -34,7 +34,7 @@ use XLSXWriter;
 /**
  * Pantalla de los modelos 111 (trimestral) y 190 (resumen anual): muestra el cálculo, genera los ficheros de
  * presentación de la AEAT de ambos modelos, guarda los datos del modelo 190 de cada perceptor, exporta los
- * datos a Excel, CSV o PDF y crea los asientos de obligación y pago.
+ * datos a Excel o PDF y crea los asientos de obligación y pago.
  *
  * @author Carlos Garcia Gomez <carlos@facturascripts.com>
  * @author Daniel Fernández Giménez <contacto@danielfg.es>
@@ -65,6 +65,13 @@ class Modelo111 extends Controller
     /** @var array */
     public $result = [];
 
+    /**
+     * Devuelve los ejercicios disponibles, filtrados por empresa si se indica.
+     *
+     * @param int|null $idempresa id de la empresa o null para todas
+     *
+     * @return array
+     */
     public function allExercises(?int $idempresa): array
     {
         if (empty($idempresa)) {
@@ -80,6 +87,11 @@ class Modelo111 extends Controller
         return $list;
     }
 
+    /**
+     * Devuelve los periodos seleccionables (cuatro trimestres y el resumen anual del 190) con su clave de traducción.
+     *
+     * @return array
+     */
     public function allPeriods(): array
     {
         return [
@@ -101,6 +113,11 @@ class Modelo111 extends Controller
         return Modelo190::CLAVES;
     }
 
+    /**
+     * Datos de la página: menú Informes, submenú de modelos fiscales.
+     *
+     * @return array
+     */
     public function getPageData(): array
     {
         $data = parent::getPageData();
@@ -111,6 +128,14 @@ class Modelo111 extends Controller
         return $data;
     }
 
+    /**
+     * Lógica del controlador: lee ejercicio, periodo y acción, guarda el perceptor si procede, calcula el modelo
+     * y ejecuta la acción pedida (descargas, impresión o generación de asientos).
+     *
+     * @param mixed $response respuesta HTTP
+     * @param mixed $user usuario actual
+     * @param mixed $permissions permisos del usuario
+     */
     public function privateCore(&$response, $user, $permissions)
     {
         parent::privateCore($response, $user, $permissions);
@@ -119,6 +144,11 @@ class Modelo111 extends Controller
         $this->codejercicio = $this->request->inputOrQuery('codejercicio', date('Y'));
         $this->period = $this->request->inputOrQuery('period', $this->getCurrentPeriod());
         $this->ingresosPeriodoAnterior = (float)$this->request->inputOrQuery('ingresosanteriores', 0);
+        if ($this->ingresosPeriodoAnterior < 0) {
+            // la casilla 29 es lo ya ingresado y se resta: un importe negativo aumentaría el resultado
+            Tools::log()->warning('m111-negative-previous-income');
+            $this->ingresosPeriodoAnterior = 0.0;
+        }
 
         // los datos de un perceptor se guardan antes de calcular, para que el cálculo los tenga en cuenta
         $action = $this->request->inputOrQuery('action', '');
@@ -139,8 +169,6 @@ class Modelo111 extends Controller
             $this->downloadFile190($response);
         } elseif ($action === 'print') {
             $this->printAction();
-        } elseif ($action === 'download-csv') {
-            $this->downloadCsv($response);
         } elseif ($action === 'download-xlsx') {
             $this->downloadXlsx($response);
         } elseif ($action === 'generate-entries') {
@@ -187,58 +215,6 @@ class Modelo111 extends Controller
         return Modelo190::SUBCLAVES;
     }
 
-    protected function downloadCsv(&$response): void
-    {
-        if (empty($this->result['entryLines'])) {
-            Tools::log()->warning('no-data');
-            return;
-        }
-
-        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
-        $periodo = $this->getPeriodNumber();
-        $filename = 'modelo111_' . $year . '_' . $periodo . '.csv';
-
-        $rows = [];
-        $rows[] = implode(';', [
-            Tools::trans('accounting-entry'),
-            Tools::trans('subaccount'),
-            Tools::trans('counterpart'),
-            Tools::trans('concept'),
-            Tools::trans('debit'),
-            Tools::trans('credit'),
-            Tools::trans('date'),
-        ]);
-        foreach ($this->result['entryLines'] as $line) {
-            $rows[] = implode(';', [
-                $line->numero,
-                $line->codsubcuenta,
-                $line->codcontrapartida,
-                '"' . str_replace('"', '""', strip_tags($line->concepto)) . '"',
-                number_format($line->debe, 2, ',', ''),
-                number_format($line->haber, 2, ',', ''),
-                $line->fecha,
-            ]);
-        }
-        // fila de totales
-        $rows[] = implode(';', [
-            '',
-            '',
-            '',
-            Tools::trans('total'),
-            number_format($this->result['totalDebe'], 2, ',', ''),
-            number_format($this->result['totalHaber'], 2, ',', ''),
-            '',
-        ]);
-
-        $content = implode("\n", $rows);
-
-        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
-        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
-        $response->setContent("\xEF\xBB\xBF" . $content); // BOM UTF-8 para Excel
-        $response->send();
-        exit;
-    }
-
     /**
      * Descarga el fichero de presentación del modelo 111 (trimestres) con el diseño de registro de la AEAT.
      *
@@ -259,7 +235,7 @@ class Modelo111 extends Controller
         }
 
         $content = Modelo111File::generate($this->result, $this->company, $this->options111);
-        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
+        $year = (string)$this->result['year'];
         $filename = $this->company->cifnif . '_' . $year . '_' . Modelo111File::periodCode($this->result['period']) . '.111';
         $this->sendFile($response, $content, $filename);
     }
@@ -286,10 +262,15 @@ class Modelo111 extends Controller
         }
 
         $content = Modelo190File::generate($this->result, $this->company, $this->options190);
-        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
+        $year = (string)$this->result['year'];
         $this->sendFile($response, $content, $this->company->cifnif . '_' . $year . '.190');
     }
 
+    /**
+     * Descarga las partidas de retenciones del periodo en Excel.
+     *
+     * @param mixed $response respuesta HTTP
+     */
     protected function downloadXlsx(&$response): void
     {
         if (empty($this->result['entryLines'])) {
@@ -297,12 +278,12 @@ class Modelo111 extends Controller
             return;
         }
 
-        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
+        $year = (string)$this->result['year'];
         $periodo = $this->getPeriodNumber();
         $filename = 'modelo111_' . $year . '_' . $periodo . '.xlsx';
 
         $writer = new XLSXWriter();
-        $writer->setAuthor('FacturaScripts');
+        $writer->setAuthor((string)$this->company->nombre);
         $writer->setTitle('Modelo 111');
 
         $sheetName = 'Modelo 111';
@@ -346,6 +327,11 @@ class Modelo111 extends Controller
         exit;
     }
 
+    /**
+     * Devuelve el trimestre (T1 a T4) de la fecha actual.
+     *
+     * @return string
+     */
     protected function getCurrentPeriod(): string
     {
         // obtenemos el número del trimestre en el que se encuentra la fecha actual
@@ -359,6 +345,11 @@ class Modelo111 extends Controller
         };
     }
 
+    /**
+     * Devuelve el código de periodo del fichero de la AEAT (0A en el resumen anual).
+     *
+     * @return string
+     */
     protected function getPeriodNumber(): string
     {
         return $this->result['period'] === 'ANNUAL' ? '0A' : Modelo111File::periodCode($this->result['period']);
@@ -392,7 +383,7 @@ class Modelo111 extends Controller
             'justificante' => preg_replace('/\D/', '', (string)$this->request->input('justificante111', '')),
         ];
 
-        $year = empty($this->result) ? date('Y') : date('Y', strtotime($this->result['exercise']->fechainicio));
+        $year = empty($this->result) ? date('Y') : (string)$this->result['year'];
         if (!empty($this->result)) {
             $this->company->load($this->result['exercise']->idempresa);
         }
@@ -406,6 +397,9 @@ class Modelo111 extends Controller
         ];
     }
 
+    /**
+     * Genera el PDF con el resumen, los perceptores y las partidas del modelo.
+     */
     protected function printAction(): void
     {
         if (empty($this->result)) {

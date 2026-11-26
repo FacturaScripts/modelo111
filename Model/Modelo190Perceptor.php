@@ -22,7 +22,7 @@ namespace FacturaScripts\Plugins\Modelo111\Model;
 use FacturaScripts\Core\Template\ModelClass;
 use FacturaScripts\Core\Template\ModelTrait;
 use FacturaScripts\Core\Tools;
-use FacturaScripts\Plugins\Modelo111\Lib\Modelo190;
+use FacturaScripts\Dinamic\Lib\Modelo190;
 
 /**
  * Datos de un perceptor del modelo 190 en un ejercicio: identificación (NIF, nombre y provincia), clave y
@@ -217,6 +217,11 @@ class Modelo190Perceptor extends ModelClass
         $this->resetAmounts();
     }
 
+    /**
+     * Nombre de la columna clave primaria.
+     *
+     * @return string
+     */
     public static function primaryColumn(): string
     {
         return 'id';
@@ -232,6 +237,11 @@ class Modelo190Perceptor extends ModelClass
         }
     }
 
+    /**
+     * Nombre de la tabla del modelo.
+     *
+     * @return string
+     */
     public static function tableName(): string
     {
         return 'modelo190_perceptores';

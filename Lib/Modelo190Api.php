@@ -130,7 +130,7 @@ class Modelo190Api
             $retenciones += round($detail['retencion'], 2);
         }
 
-        $year = date('Y', strtotime($result['exercise']->fechainicio));
+        $year = (string)$result['year'];
         $errors = Modelo190::validate($result, $company, ['numero' => '190' . $year . '000001']);
         return [
             'registros' => count($result['recipientDetails']),

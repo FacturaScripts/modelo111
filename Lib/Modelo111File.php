@@ -59,7 +59,7 @@ class Modelo111File
      */
     public static function generate(array $result, Empresa $empresa, array $options): string
     {
-        $year = date('Y', strtotime($result['exercise']->fechainicio));
+        $year = (string)$result['year'];
         $period = static::periodCode($result['period']);
         $id = '1110' . $year . $period . '0000>';
 

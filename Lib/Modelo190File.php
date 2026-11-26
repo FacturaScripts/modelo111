@@ -54,7 +54,7 @@ class Modelo190File
      */
     public static function generate(array $result, Empresa $empresa, array $options): string
     {
-        $year = date('Y', strtotime($result['exercise']->fechainicio));
+        $year = (string)$result['year'];
         $records = [static::record1($result, $empresa, $options, $year)];
         foreach ($result['recipientDetails'] as $detail) {
             $records[] = static::record2($detail, $empresa, $year);

@@ -228,7 +228,7 @@ final class Modelo111Test extends Modelo111TestCase
         $this->assertNotEmpty($result);
 
         // programamos la limpieza de los asientos generados
-        $concepto = 'Modelo 111 ' . $result['period'] . ' ' . date('Y', strtotime($exercise->fechainicio));
+        $concepto = 'Modelo 111 ' . $result['period'] . ' ' . $result['year'];
         $this->addCleanup(static function () use ($exercise, $concepto) {
             $where = [
                 Where::eq('codejercicio', $exercise->codejercicio),
@@ -272,6 +272,65 @@ final class Modelo111Test extends Modelo111TestCase
     public function testGenerateEntriesSinDatos(): void
     {
         $this->assertFalse(Modelo111::generateEntries([]));
+    }
+
+    /**
+     * El periodo anual (modelo 190) es informativo y no se ingresa: no genera asientos de obligación ni de pago.
+     */
+    public function testGenerateEntriesAnualNoCreaAsientos(): void
+    {
+        $exercise = $this->getCurrentExercise();
+        $this->createNominaAsiento($exercise, 1000.0, 150.0);
+
+        $result = Modelo111::generate($exercise->codejercicio, 'ANNUAL');
+        $this->assertGreaterThan(0, $result['totalIngresar']);
+        $this->assertFalse(Modelo111::generateEntries($result));
+
+        $where = [
+            Where::eq('codejercicio', $exercise->codejercicio),
+            Where::like('concepto', 'Modelo 111 ANNUAL%'),
+        ];
+        $this->assertSame(0, Asiento::count($where));
+    }
+
+    /**
+     * En un ejercicio que no coincide con el año natural, cada trimestre cae en el año del ejercicio en el que
+     * tiene días y el periodo se limita a las fechas del ejercicio.
+     */
+    public function testEjercicioNoNatural(): void
+    {
+        $exercise = new Ejercicio();
+        $exercise->codejercicio = 'N111';
+        $exercise->nombre = 'Ejercicio no natural';
+        $exercise->idempresa = Tools::settings('default', 'idempresa');
+        $exercise->fechainicio = '01-07-2090';
+        $exercise->fechafin = '30-06-2091';
+        $this->assertTrue($exercise->save());
+        $this->addCleanup(static function () use ($exercise) {
+            $exercise->delete();
+        });
+
+        // T1 y T2 caen en el segundo año del ejercicio; T3 y T4, en el primero
+        $expected = [
+            'T1' => ['01-01-2091', '31-03-2091', 2091],
+            'T2' => ['01-04-2091', '30-06-2091', 2091],
+            'T3' => ['01-07-2090', '30-09-2090', 2090],
+            'T4' => ['01-10-2090', '31-12-2090', 2090],
+        ];
+        foreach ($expected as $period => [$start, $end, $year]) {
+            $result = Modelo111::generate($exercise->codejercicio, $period);
+            $this->assertSame($start, $result['dateStart'], $period);
+            $this->assertSame($end, $result['dateEnd'], $period);
+            $this->assertSame($year, $result['year'], $period);
+            $this->assertFalse($result['partialPeriod'], $period);
+        }
+
+        // el anual se limita a la parte del año natural que abarca el ejercicio
+        $annual = Modelo111::generate($exercise->codejercicio, 'ANNUAL');
+        $this->assertSame('01-07-2090', $annual['dateStart']);
+        $this->assertSame('31-12-2090', $annual['dateEnd']);
+        $this->assertSame(2090, $annual['year']);
+        $this->assertTrue($annual['partialPeriod']);
     }
 
     /**

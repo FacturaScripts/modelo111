@@ -137,6 +137,11 @@ final class Modelo111ApiTest extends Modelo111TestCase
         $data = $this->callApi(['codejercicio' => $exercise->codejercicio, 'periodo' => 'T1', 'ingresos_anteriores' => 'abc'], $code);
         $this->assertSame(400, $code);
         $this->assertSame('invalid-parameter', $data['message']);
+
+        // la casilla 29 es lo ya ingresado: un importe negativo no se admite
+        $data = $this->callApi(['codejercicio' => $exercise->codejercicio, 'periodo' => 'T1', 'ingresos_anteriores' => '-10'], $code);
+        $this->assertSame(400, $code);
+        $this->assertSame('invalid-parameter', $data['message']);
     }
 
     /**
