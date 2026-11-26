@@ -24,10 +24,18 @@ use FacturaScripts\Core\DataSrc\Ejercicios;
 use FacturaScripts\Core\Tools;
 use FacturaScripts\Dinamic\Lib\ExportManager;
 use FacturaScripts\Dinamic\Lib\Modelo111 as LibModelo111;
+use FacturaScripts\Dinamic\Lib\Modelo111File;
+use FacturaScripts\Dinamic\Lib\Modelo190;
+use FacturaScripts\Dinamic\Lib\Modelo190File;
 use FacturaScripts\Dinamic\Model\Empresa;
+use FacturaScripts\Dinamic\Model\Modelo190Perceptor;
 use XLSXWriter;
 
 /**
+ * Pantalla de los modelos 111 (trimestral) y 190 (resumen anual): muestra el cálculo, genera los ficheros de
+ * presentación de la AEAT de ambos modelos, guarda los datos del modelo 190 de cada perceptor, exporta los
+ * datos a Excel, CSV o PDF y crea los asientos de obligación y pago.
+ *
  * @author Carlos Garcia Gomez <carlos@facturascripts.com>
  * @author Daniel Fernández Giménez <contacto@danielfg.es>
  */
@@ -36,8 +44,20 @@ class Modelo111 extends Controller
     /** @var string */
     public $codejercicio;
 
+    /** @var Empresa empresa del ejercicio del modelo */
+    public $company;
+
+    /** @var string[] errores que impiden generar el fichero del modelo 190 */
+    public $errors190 = [];
+
     /** @var float */
     public $ingresosPeriodoAnterior = 0.0;
+
+    /** @var array opciones del fichero del modelo 111: tipo, iban y justificante */
+    public $options111 = [];
+
+    /** @var array opciones del fichero del modelo 190: numero, tipo, numeroanterior, contacto, telefono y email */
+    public $options190 = [];
 
     /** @var string */
     public $period = 'T1';
@@ -71,6 +91,16 @@ class Modelo111 extends Controller
         ];
     }
 
+    /**
+     * Devuelve las claves de percepción del modelo 190.
+     *
+     * @return array
+     */
+    public function claves190(): array
+    {
+        return Modelo190::CLAVES;
+    }
+
     public function getPageData(): array
     {
         $data = parent::getPageData();
@@ -85,19 +115,28 @@ class Modelo111 extends Controller
     {
         parent::privateCore($response, $user, $permissions);
 
+        $this->company = new Empresa();
         $this->codejercicio = $this->request->inputOrQuery('codejercicio', date('Y'));
         $this->period = $this->request->inputOrQuery('period', $this->getCurrentPeriod());
         $this->ingresosPeriodoAnterior = (float)$this->request->inputOrQuery('ingresosanteriores', 0);
+
+        // los datos de un perceptor se guardan antes de calcular, para que el cálculo los tenga en cuenta
+        $action = $this->request->inputOrQuery('action', '');
+        if ($action === 'save-recipient') {
+            $this->saveRecipientAction();
+        }
 
         $this->result = LibModelo111::generate(
             $this->codejercicio,
             $this->period,
             $this->ingresosPeriodoAnterior
         );
+        $this->loadFileOptions();
 
-        $action = $this->request->inputOrQuery('action', '');
         if ($action === 'download') {
             $this->downloadFile($response);
+        } elseif ($action === 'download-190') {
+            $this->downloadFile190($response);
         } elseif ($action === 'print') {
             $this->printAction();
         } elseif ($action === 'download-csv') {
@@ -109,6 +148,43 @@ class Modelo111 extends Controller
                 Tools::log()->notice('record-updated-correctly');
             }
         }
+
+        // errores que impiden generar el fichero del modelo 190
+        if (!empty($this->result) && $this->result['period'] === 'ANNUAL' && $this->company->exists()) {
+            $this->errors190 = Modelo190::validate($this->result, $this->company, $this->options190);
+        }
+    }
+
+    /**
+     * Devuelve las provincias del modelo 190.
+     *
+     * @return array
+     */
+    public function provincias190(): array
+    {
+        return Modelo190::PROVINCIAS;
+    }
+
+    /**
+     * Devuelve los errores del modelo 190 de un perceptor del detalle.
+     *
+     * @param array $detail detalle del perceptor
+     *
+     * @return string[]
+     */
+    public function recipientErrors(array $detail): array
+    {
+        return Modelo190::validateRecipient($detail);
+    }
+
+    /**
+     * Devuelve las subclaves de percepción del modelo 190 de cada clave.
+     *
+     * @return array
+     */
+    public function subclaves190(): array
+    {
+        return Modelo190::SUBCLAVES;
     }
 
     protected function downloadCsv(&$response): void
@@ -161,6 +237,57 @@ class Modelo111 extends Controller
         $response->setContent("\xEF\xBB\xBF" . $content); // BOM UTF-8 para Excel
         $response->send();
         exit;
+    }
+
+    /**
+     * Descarga el fichero de presentación del modelo 111 (trimestres) con el diseño de registro de la AEAT.
+     *
+     * @param mixed $response respuesta HTTP
+     */
+    protected function downloadFile(&$response): void
+    {
+        if (empty($this->result) || false === $this->loadCompany()) {
+            return;
+        }
+
+        $errors = Modelo111File::validate($this->result, $this->company, $this->options111);
+        if (!empty($errors)) {
+            foreach ($errors as $error) {
+                Tools::log()->warning($error);
+            }
+            return;
+        }
+
+        $content = Modelo111File::generate($this->result, $this->company, $this->options111);
+        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
+        $filename = $this->company->cifnif . '_' . $year . '_' . Modelo111File::periodCode($this->result['period']) . '.111';
+        $this->sendFile($response, $content, $filename);
+    }
+
+    /**
+     * Descarga el fichero de presentación del modelo 190 (periodo anual) con el diseño de registro de la AEAT.
+     * Si faltan datos de la declaración o de algún perceptor, no lo genera y muestra los errores.
+     *
+     * @param mixed $response respuesta HTTP
+     */
+    protected function downloadFile190(&$response): void
+    {
+        if (empty($this->result) || false === $this->loadCompany()) {
+            return;
+        }
+
+        $errors = Modelo190::validate($this->result, $this->company, $this->options190);
+        if (!empty($errors)) {
+            Tools::log()->warning('m190-file-not-generated');
+            foreach ($errors as $error) {
+                Tools::log()->warning($error);
+            }
+            return;
+        }
+
+        $content = Modelo190File::generate($this->result, $this->company, $this->options190);
+        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
+        $this->sendFile($response, $content, $this->company->cifnif . '_' . $year . '.190');
     }
 
     protected function downloadXlsx(&$response): void
@@ -219,6 +346,66 @@ class Modelo111 extends Controller
         exit;
     }
 
+    protected function getCurrentPeriod(): string
+    {
+        // obtenemos el número del trimestre en el que se encuentra la fecha actual
+        $month = date('n');
+        return match ($month) {
+            1, 2, 3 => 'T1',
+            4, 5, 6 => 'T2',
+            7, 8, 9 => 'T3',
+            10, 11, 12 => 'T4',
+            default => 'T1',
+        };
+    }
+
+    protected function getPeriodNumber(): string
+    {
+        return $this->result['period'] === 'ANNUAL' ? '0A' : Modelo111File::periodCode($this->result['period']);
+    }
+
+    /**
+     * Carga la empresa del ejercicio del modelo.
+     *
+     * @return bool
+     */
+    protected function loadCompany(): bool
+    {
+        if ($this->company->load($this->result['exercise']->idempresa)) {
+            return true;
+        }
+
+        Tools::log()->error('company-not-found');
+        return false;
+    }
+
+    /**
+     * Lee las opciones de los ficheros del formulario: las del modelo 111 (tipo de declaración, IBAN y
+     * justificante de la declaración anterior) y las del modelo 190 (nº de la declaración, complementaria o
+     * sustitutiva, nº de la anterior y persona de contacto, con los datos de la empresa por defecto).
+     */
+    protected function loadFileOptions(): void
+    {
+        $this->options111 = [
+            'tipo' => (string)$this->request->input('tipo111', ''),
+            'iban' => (string)$this->request->input('iban111', ''),
+            'justificante' => preg_replace('/\D/', '', (string)$this->request->input('justificante111', '')),
+        ];
+
+        $year = empty($this->result) ? date('Y') : date('Y', strtotime($this->result['exercise']->fechainicio));
+        if (!empty($this->result)) {
+            $this->company->load($this->result['exercise']->idempresa);
+        }
+        $this->options190 = [
+            'numero' => preg_replace('/\D/', '', (string)$this->request->input('numero190', '190' . $year . '000001')),
+            'tipo' => (string)$this->request->input('tipo190', ''),
+            'numeroanterior' => preg_replace('/\D/', '', (string)$this->request->input('numeroanterior190', '')),
+            'contacto' => (string)$this->request->input('contacto190', (string)$this->company->administrador),
+            'telefono' => (string)$this->request->input('telefono190', (string)$this->company->telefono1),
+            'email' => (string)$this->request->input('email190', (string)$this->company->email),
+        ];
+    }
+
     protected function printAction(): void
     {
         if (empty($this->result)) {
@@ -247,6 +434,13 @@ class Modelo111 extends Controller
                 $total => Tools::money($this->result['totalIngresar']),
             ]]
         );
+
+        // trimestres: casillas del modelo 111 por grupo; anual: perceptores del modelo 190
+        if ($this->result['period'] !== 'ANNUAL') {
+            $this->printGroups111($exportManager);
+        } elseif (!empty($this->result['recipientDetails'])) {
+            $this->printRecipients190($exportManager);
+        }
 
         // asientos contables
         if (!empty($this->result['entryLines'])) {
@@ -288,176 +482,120 @@ class Modelo111 extends Controller
         $exportManager->show($this->response);
     }
 
-    protected function getCurrentPeriod(): string
+    /**
+     * Añade al PDF las casillas del modelo 111 de cada grupo (perceptores, percepciones y retenciones).
+     *
+     * @param ExportManager $exportManager documento PDF
+     */
+    protected function printGroups111(ExportManager $exportManager): void
     {
-        // obtenemos el número del trimestre en el que se encuentra la fecha actual
-        $month = date('n');
-        return match ($month) {
-            1, 2, 3 => 'T1',
-            4, 5, 6 => 'T2',
-            7, 8, 9 => 'T3',
-            10, 11, 12 => 'T4',
-            default => 'T1',
-        };
+        $boxes = Tools::trans('m111-boxes');
+        $group = Tools::trans('type');
+        $recipients = Tools::trans('number-recipients');
+        $base = Tools::trans('withholding-base');
+        $withholdings = Tools::trans('withholdings-made');
+
+        $rows = [];
+        foreach (Modelo190::GROUPS_111 as $key => $codes) {
+            $data = $this->result['groups111'][$key];
+            $rows[] = [
+                $boxes => implode('-', [$codes[0], $codes[2]]),
+                $group => Tools::trans('m111-group-' . $key),
+                $recipients => $data['perceptores'],
+                $base => Tools::money($data['base']),
+                $withholdings => Tools::money($data['retenciones']),
+            ];
+        }
+        $exportManager->addTablePage([$boxes, $group, $recipients, $base, $withholdings], $rows);
     }
 
-    protected function downloadFile(&$response): void
+    /**
+     * Añade al PDF los perceptores del modelo 190 con su NIF, provincia, clave y subclave.
+     *
+     * @param ExportManager $exportManager documento PDF
+     */
+    protected function printRecipients190(ExportManager $exportManager): void
     {
-        if (empty($this->result)) {
-            Tools::log()->warning('no-data');
-            return;
+        $nif = Tools::trans('cifnif');
+        $name = Tools::trans('name');
+        $province = Tools::trans('province');
+        $key = Tools::trans('m190-key');
+        $base = Tools::trans('withholding-base');
+        $withholdings = Tools::trans('withholdings-made');
+
+        $rows = [];
+        foreach ($this->result['recipientDetails'] as $detail) {
+            $rows[] = [
+                $nif => $detail['cifnif'],
+                $name => $detail['nombre'],
+                $province => $detail['codprovincia'],
+                $key => trim($detail['clave'] . ' ' . $detail['subclave']),
+                $base => Tools::money($detail['base']),
+                $withholdings => Tools::money($detail['retencion']),
+            ];
+        }
+        $exportManager->addTablePage([$nif, $name, $province, $key, $base, $withholdings], $rows);
+    }
+
+    /**
+     * Guarda los datos del modelo 190 de un perceptor (identificación, clave, subclave y datos adicionales)
+     * para el ejercicio del modelo.
+     *
+     * @return bool true si se han guardado
+     */
+    protected function saveRecipientAction(): bool
+    {
+        if (false === $this->permissions->allowUpdate) {
+            Tools::log()->warning('not-allowed-modify');
+            return false;
+        } elseif (false === $this->validateFormToken()) {
+            return false;
         }
 
-        $empresa = new Empresa();
-        if (!$empresa->load($this->result['exercise']->idempresa)) {
-            Tools::log()->error('company-not-found');
-            return;
+        $tipo = (string)$this->request->input('recipient_tipo', '');
+        $codigo = (string)$this->request->input('recipient_codigo', '');
+        $perceptor = Modelo190::getPerceptor($this->codejercicio, $tipo, $codigo, []);
+
+        $fields = array_merge(
+            ['cifnif', 'nombre', 'codprovincia', 'clave', 'subclave', 'nifrepresentante', 'ceutamelilla',
+                'anionacimiento', 'situacionfamiliar', 'nifconyuge', 'discapacidad', 'contrato', 'hijo1', 'hijo2',
+                'hijo3'],
+            Modelo190Perceptor::AMOUNT_FIELDS,
+            array_keys(Modelo190Perceptor::COUNT_FIELDS)
+        );
+        foreach ($fields as $field) {
+            $value = $this->request->input('recipient_' . $field);
+            if (null !== $value) {
+                $perceptor->{$field} = in_array($field, Modelo190Perceptor::AMOUNT_FIELDS, true)
+                    ? (float)str_replace(',', '.', $value)
+                    : $value;
+            }
+        }
+        $perceptor->movilidad = (bool)$this->request->input('recipient_movilidad', false);
+        $perceptor->prestamovivienda = (bool)$this->request->input('recipient_prestamovivienda', false);
+
+        if (false === $perceptor->save()) {
+            Tools::log()->error('record-save-error');
+            return false;
         }
 
-        // Generar el contenido del archivo
-        $content = $this->generateFileContent($empresa);
+        Tools::log()->notice('record-updated-correctly');
+        return true;
+    }
 
-        // Configurar headers para descarga
-        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
-        $periodo = $this->getPeriodNumber();
-        $filename = $empresa->cifnif . '_' . $year . '_' . $periodo . '.111';
-
+    /**
+     * Envía un fichero de presentación en ISO-8859-1 y termina la petición.
+     *
+     * @param mixed $response respuesta HTTP
+     * @param string $content contenido del fichero
+     * @param string $filename nombre del fichero
+     */
+    protected function sendFile(&$response, string $content, string $filename): void
+    {
         $response->headers->set('Content-Type', 'text/plain; charset=ISO-8859-1');
         $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
-        $response->setContent(mb_convert_encoding($content, 'ISO-8859-1', 'UTF-8'));
+        $response->setContent($content);
         $response->send();
         exit;
-    }
-
-    protected function generateFileContent(Empresa $empresa): string
-    {
-        $lines = [];
-        $year = date('Y', strtotime($this->result['exercise']->fechainicio));
-        $periodo = $this->getPeriodNumber();
-
-        // Registro tipo 1: Declarante
-        $lines[] = $this->generateRecord1($empresa, $year, $periodo);
-
-        // Registro tipo 2: Totales
-        $lines[] = $this->generateRecord2($empresa, $year, $periodo);
-
-        return implode("\r\n", $lines) . "\r\n";
-    }
-
-    protected function generateRecord1(Empresa $empresa, string $year, string $periodo): string
-    {
-        // Tipo de registro: 1
-        $record = '1';
-
-        // Modelo: 111
-        $record .= '111';
-
-        // Ejercicio (4 dígitos)
-        $record .= $year;
-
-        // NIF del declarante (9 caracteres, alineado a la izquierda)
-        $record .= $this->formatAlphanumeric($empresa->cifnif, 9);
-
-        // Nombre o razón social del declarante (40 caracteres)
-        $record .= $this->formatAlphanumeric($empresa->nombre, 40);
-
-        // Tipo de soporte: 'T' (telemático)
-        $record .= 'T';
-
-        // Teléfono (9 caracteres)
-        $record .= $this->formatAlphanumeric($empresa->telefono1, 9);
-
-        // Persona de contacto (40 caracteres)
-        $record .= $this->formatAlphanumeric($empresa->administrador, 40);
-
-        // Número de identificación fiscal del representante legal (9 caracteres, espacios si no aplica)
-        $record .= str_repeat(' ', 9);
-
-        // Período: dos dígitos (01, 02, 03, 04, 0A para anual)
-        $record .= $periodo;
-
-        // Espacios de relleno hasta completar 252 caracteres
-        $record .= str_repeat(' ', 252 - strlen($record));
-
-        return $record;
-    }
-
-    protected function generateRecord2(Empresa $empresa, string $year, string $periodo): string
-    {
-        // Tipo de registro: 2
-        $record = '2';
-
-        // Modelo: 111
-        $record .= '111';
-
-        // Ejercicio (4 dígitos)
-        $record .= $year;
-
-        // NIF del declarante (9 caracteres)
-        $record .= $this->formatAlphanumeric($empresa->cifnif, 9);
-
-        // Período: dos dígitos
-        $record .= $periodo;
-
-        // Subclave: Clave A - Rendimientos del trabajo (2 caracteres)
-        $record .= '01';
-
-        // Número de perceptores (9 dígitos, sin decimales)
-        $record .= $this->formatNumeric($this->result['numRecipients'], 9, 0);
-
-        // Base de retenciones (15 enteros + 2 decimales = 17 caracteres)
-        $record .= $this->formatNumeric($this->result['baseRetenciones'], 17, 2);
-
-        // Retenciones practicadas (15 enteros + 2 decimales = 17 caracteres)
-        $record .= $this->formatNumeric($this->result['retencionesPracticadas'], 17, 2);
-
-        // Ingresos del período anterior (15 enteros + 2 decimales = 17 caracteres)
-        $record .= $this->formatNumeric($this->result['ingresosPeriodoAnterior'], 17, 2);
-
-        // Espacios de relleno hasta completar 252 caracteres
-        $record .= str_repeat(' ', 252 - strlen($record));
-
-        return $record;
-    }
-
-    protected function formatAlphanumeric(string $value, int $length): string
-    {
-        // Eliminar caracteres especiales y acentos
-        $value = $this->removeAccents($value);
-        $value = strtoupper($value);
-
-        // Truncar o rellenar con espacios a la derecha
-        return str_pad(substr($value, 0, $length), $length, ' ', STR_PAD_RIGHT);
-    }
-
-    protected function formatNumeric(float $value, int $length, int $decimals): string
-    {
-        // Convertir a entero sin decimales (multiplicando por 10^decimales)
-        $multiplier = pow(10, $decimals);
-        $intValue = (int)round($value * $multiplier);
-
-        // Formatear con ceros a la izquierda
-        return str_pad($intValue, $length, '0', STR_PAD_LEFT);
-    }
-
-    protected function removeAccents(string $text): string
-    {
-        $unwanted = [
-            'á' => 'A', 'é' => 'E', 'í' => 'I', 'ó' => 'O', 'ú' => 'U',
-            'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U',
-            'ñ' => 'N', 'Ñ' => 'N', 'ü' => 'U', 'Ü' => 'U'
-        ];
-        return strtr($text, $unwanted);
-    }
-
-    protected function getPeriodNumber(): string
-    {
-        return match ($this->result['period']) {
-            'T2' => '2T',
-            'T3' => '3T',
-            'T4' => '4T',
-            'Annual' => '0A',
-            default => '1T',
-        };
     }
 }

@@ -24,9 +24,11 @@ use FacturaScripts\Core\Tools;
 use FacturaScripts\Core\Where;
 use FacturaScripts\Dinamic\Model\Asiento;
 use FacturaScripts\Dinamic\Model\CuentaEspecial;
+use FacturaScripts\Dinamic\Lib\Modelo190;
 use FacturaScripts\Dinamic\Model\Ejercicio;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
 use FacturaScripts\Dinamic\Model\Partida;
+use FacturaScripts\Dinamic\Model\Proveedor;
 use FacturaScripts\Dinamic\Model\Retencion;
 use FacturaScripts\Dinamic\Model\Subcuenta;
 
@@ -72,6 +74,9 @@ class Modelo111
     /** @var Partida[] */
     protected static $entryLines = [];
 
+    /** @var array perceptores, percepciones y retenciones de cada grupo de casillas del modelo 111 */
+    protected static $groups111 = [];
+
     /** @var Ejercicio */
     protected static $exercise;
 
@@ -99,14 +104,21 @@ class Modelo111
     /** @var float */
     protected static $totalIngresar = 0.0;
 
+    /** @var float base de sueldos (640) que no se ha podido asignar a ningún perceptor */
+    protected static $unassignedBase = 0.0;
+
     /**
      * Calcula los datos del modelo 111 del ejercicio y periodo indicados.
      *
      * @param string $codejercicio código del ejercicio
      * @param string $period periodo: T1, T2, T3, T4 o ANNUAL (cualquier otro valor se trata como T1)
-     * @param float $ingresosAnteriores importe ingresado en declaraciones anteriores del mismo periodo
+     * @param float $ingresosAnteriores importe ya ingresado en autoliquidaciones anteriores del mismo periodo
+     *                                  (casilla 29), que se resta de las retenciones
      *
-     * @return array resultados del modelo o un array vacío si el ejercicio no existe
+     * @return array resultados del modelo (con las fechas del periodo, dateStart y dateEnd, en formato d-m-Y),
+     *               el detalle por perceptor (recipientDetails, con los datos del modelo 190), los totales por
+     *               grupo de casillas del modelo 111 (groups111) y la base de sueldos sin perceptor
+     *               (unassignedBase), o un array vacío si el ejercicio no existe
      */
     public static function generate(string $codejercicio, string $period, float $ingresosAnteriores = 0.0): array
     {
@@ -138,6 +150,8 @@ class Modelo111
         return [
             'exercise' => static::$exercise,
             'period' => static::$period,
+            'dateStart' => static::$dateStart,
+            'dateEnd' => static::$dateEnd,
             'entryLines' => static::$entryLines,
             'baseLines' => static::$baseLines,
             'baseRetenciones' => static::$baseRetenciones,
@@ -145,6 +159,8 @@ class Modelo111
             'ingresosPeriodoAnterior' => static::$ingresosPeriodoAnterior,
             'numRecipients' => static::$numRecipients,
             'recipientDetails' => static::$recipientDetails,
+            'groups111' => static::$groups111,
+            'unassignedBase' => static::$unassignedBase,
             'totalDebe' => static::$totalDebe,
             'totalHaber' => static::$totalHaber,
             'totalIngresar' => static::$totalIngresar,
@@ -196,6 +212,36 @@ class Modelo111
         $accPag = static::createAsiento($concepto . static::ENTRY_CONCEPT_PAYMENT, $fecha, $total, $exercise, $cod4751, $cod572);
 
         return $accObl && $accPag;
+    }
+
+    /**
+     * Indica si el ejercicio tiene subcuentas de retenciones de alquileres (cuenta especial IRPFA, en la
+     * subcuenta o en su cuenta). Sin ellas, las retenciones de alquileres no se pueden separar de las del
+     * modelo 111 y se incluyen en él.
+     *
+     * @param string $codejercicio código del ejercicio
+     *
+     * @return bool
+     */
+    public static function hasRentalSubaccounts(string $codejercicio): bool
+    {
+        // subcuentas marcadas directamente con la cuenta especial IRPFA
+        $where = [
+            Where::eq('codejercicio', $codejercicio),
+            Where::eq('codcuentaesp', 'IRPFA'),
+        ];
+        if (Subcuenta::count($where) > 0) {
+            return true;
+        }
+
+        // subcuentas de la cuenta con la cuenta especial IRPFA
+        $special = new CuentaEspecial();
+        if (false === $special->loadWhere([Where::eq('codcuentaesp', 'IRPFA')])) {
+            return false;
+        }
+
+        $cuenta = $special->getCuenta($codejercicio);
+        return $cuenta->exists() && !empty($cuenta->getSubcuentas());
     }
 
     /**
@@ -329,14 +375,25 @@ class Modelo111
     }
 
     /**
-     * Inicializa el detalle de un perceptor (base y retención a cero) si todavía no existe.
+     * Inicializa el detalle de un perceptor (base y retención a cero) si todavía no existe y carga sus datos
+     * del modelo 190: los guardados para el ejercicio o unos propuestos. En los perceptores de facturas de
+     * compra se proponen el NIF, el nombre y la provincia del proveedor y la clave según el porcentaje de
+     * retención; en los de subcuenta, la descripción de la subcuenta y la clave A (trabajo) si el asiento
+     * tiene sueldos o la cuenta no es de proveedores o acreedores (400 y 410), o G.01 en otro caso.
      *
-     * @param string $codContrapartida subcuenta del perceptor
+     * @param string $tipo tipo de perceptor: proveedor o subcuenta
+     * @param string $codigo código del proveedor o de la subcuenta
+     * @param string $codContrapartida subcuenta contrapartida de la retención o del sueldo
+     * @param array|null $invoice datos de la factura de compra del asiento, si la hay
+     * @param bool $isPayroll true si el asiento tiene partidas de sueldos y salarios (640)
+     *
+     * @return string clave del perceptor en el detalle (tipo:codigo)
      */
-    protected static function initRecipient(string $codContrapartida): void
+    protected static function initRecipient(string $tipo, string $codigo, string $codContrapartida, ?array $invoice, bool $isPayroll): string
     {
-        if (isset(static::$recipientDetails[$codContrapartida])) {
-            return;
+        $key = $tipo . ':' . $codigo;
+        if (isset(static::$recipientDetails[$key])) {
+            return $key;
         }
 
         // buscar la subcuenta de la contrapartida para obtener su descripción
@@ -346,16 +403,42 @@ class Modelo111
             Where::eq('codsubcuenta', $codContrapartida)
         ];
         $descripcion = '';
-        if ($subcuenta->loadWhere($whereSubcuenta)) {
+        if ($codContrapartida !== '' && $subcuenta->loadWhere($whereSubcuenta)) {
             $descripcion = $subcuenta->descripcion;
         }
 
-        static::$recipientDetails[$codContrapartida] = [
+        // datos propuestos del modelo 190
+        if ($tipo === Modelo190::TYPE_SUPPLIER) {
+            $defaults = static::supplierDefaults($codigo, $invoice ?? []);
+        } else {
+            $isActivity = false === $isPayroll
+                && (str_starts_with($codContrapartida, '400') || str_starts_with($codContrapartida, '410'));
+            $defaults = [
+                'nombre' => $descripcion,
+                'clave' => $isActivity ? 'G' : 'A',
+                'subclave' => $isActivity ? '01' : '',
+            ];
+        }
+        $perceptor = Modelo190::getPerceptor(static::$exercise->codejercicio, $tipo, $codigo, $defaults);
+
+        static::$recipientDetails[$key] = [
+            'key' => $key,
+            'tipo' => $tipo,
+            'codigo' => $codigo,
             'codcontrapartida' => $codContrapartida,
             'descripcion' => $descripcion,
+            'cifnif' => (string)$perceptor->cifnif,
+            'nombre' => empty($perceptor->nombre) ? $descripcion : (string)$perceptor->nombre,
+            'codprovincia' => (string)$perceptor->codprovincia,
+            'clave' => (string)$perceptor->clave,
+            'subclave' => (string)$perceptor->subclave,
+            'grupo111' => Modelo190::group111((string)$perceptor->clave, (string)$perceptor->subclave),
+            'guardado' => $perceptor->exists(),
+            'perceptor' => $perceptor,
             'base' => 0.0,
-            'retencion' => 0.0
+            'retencion' => 0.0,
         ];
+        return $key;
     }
 
     /**
@@ -527,8 +610,61 @@ class Modelo111
     }
 
     /**
+     * Carga las facturas de compra de los asientos con retenciones y, de cada una, el proveedor, su NIF,
+     * nombre y dirección, el porcentaje de retención y la base sujeta a retención (en euros): el neto de las
+     * líneas con IRPF con los descuentos del documento o, si las líneas no tienen IRPF, el neto de la factura.
+     * En las rectificativas la base es negativa.
+     *
+     * @return array datos de cada factura, indexados por el id de su asiento
+     */
+    protected static function loadInvoices(): array
+    {
+        if (empty(static::$entryLines)) {
+            return [];
+        }
+
+        $asientosIds = [];
+        foreach (static::$entryLines as $line) {
+            $asientosIds[$line->idasiento] = (int)$line->idasiento;
+        }
+
+        $invoices = [];
+        foreach (FacturaProveedor::all([Where::in('idasiento', array_values($asientosIds))]) as $invoice) {
+            $base = 0.0;
+            $irpf = (float)$invoice->irpf;
+            foreach ($invoice->getLines() as $line) {
+                if (empty($line->irpf)) {
+                    continue;
+                }
+                $base += (float)$line->pvptotal;
+                if (empty($irpf)) {
+                    $irpf = (float)$line->irpf;
+                }
+            }
+            $base = abs($base) > 0.0 ? $base * $invoice->getEUDiscount() : (float)$invoice->neto;
+            $tasaconv = empty($invoice->tasaconv) ? 1.0 : (float)$invoice->tasaconv;
+
+            $invoices[$invoice->idasiento] = [
+                'codproveedor' => (string)$invoice->codproveedor,
+                'cifnif' => (string)$invoice->cifnif,
+                'nombre' => (string)$invoice->nombre,
+                'codpostal' => (string)$invoice->codpostal,
+                'codpais' => (string)$invoice->codpais,
+                'irpf' => $irpf,
+                'base' => round($base / $tasaconv, 2),
+            ];
+        }
+
+        return $invoices;
+    }
+
+    /**
      * Calcula las casillas del modelo (perceptores, base, retenciones y total a ingresar), el detalle
-     * por perceptor y los totales del debe y del haber de las partidas de retenciones.
+     * por perceptor con sus datos del modelo 190, los totales por grupo de casillas del modelo 111 y los
+     * totales del debe y del haber de las partidas de retenciones.
+     *
+     * El perceptor de una retención es el proveedor de la factura de compra del asiento o, si el asiento no
+     * es de una factura (nóminas u otros asientos manuales), la subcuenta contrapartida de la retención.
      */
     protected static function loadResults(): void
     {
@@ -536,17 +672,30 @@ class Modelo111
         static::$baseRetenciones = 0.0;
         static::$retencionesPracticadas = 0.0;
         static::$recipientDetails = [];
+        static::$unassignedBase = 0.0;
 
-        // obtener bases imponibles de los asientos con retenciones
+        // obtener bases imponibles de los asientos con retenciones y las facturas de compra
         $basesByAsiento = static::loadBasesByAsiento();
+        $invoices = static::loadInvoices();
 
         // asientos cuyo debe revierte retenciones (rectificativas de compra, regularizaciones de nóminas...)
         $reversalAsientos = static::loadReversalAsientos();
 
-        // calculamos las retenciones practicadas (casilla 03) y los perceptores
+        // asientos con sueldos y salarios (640): nóminas
+        $payrollAsientos = [];
+        foreach (static::$baseLines as $line) {
+            $payrollAsientos[$line->idasiento] = true;
+        }
+
+        // perceptores de cada asiento y asientos cuya base ya se ha sumado
+        $asientoRecipients = [];
+        $baseDone = [];
+
+        // calculamos las retenciones practicadas y los perceptores
         foreach (static::$entryLines as $line) {
-            $codcontrapartida = $line->codcontrapartida;
-            if (empty($codcontrapartida)) {
+            $codcontrapartida = (string)$line->codcontrapartida;
+            $invoice = $invoices[$line->idasiento] ?? null;
+            if (empty($codcontrapartida) && null === $invoice) {
                 continue;
             }
 
@@ -557,44 +706,51 @@ class Modelo111
                 continue;
             }
 
-            $recipients[$codcontrapartida] = $codcontrapartida;
+            // el perceptor es el proveedor de la factura o la subcuenta contrapartida
+            $key = null === $invoice
+                ? static::initRecipient(Modelo190::TYPE_SUBACCOUNT, $codcontrapartida, $codcontrapartida, null, isset($payrollAsientos[$line->idasiento]))
+                : static::initRecipient(Modelo190::TYPE_SUPPLIER, $invoice['codproveedor'], $codcontrapartida, $invoice, false);
+            $recipients[$key] = $key;
+            $asientoRecipients[$line->idasiento][$key] = $key;
 
             $retencionNeta = $isReversal ? $line->haber - $line->debe : $line->haber;
             static::$retencionesPracticadas += $retencionNeta;
+            static::$recipientDetails[$key]['retencion'] += $retencionNeta;
 
-            // inicializar perceptor si no existe
-            static::initRecipient($codcontrapartida);
-
-            // sumar retención
-            static::$recipientDetails[$codcontrapartida]['retencion'] += $retencionNeta;
-
-            // sumar base imponible del asiento completo (puede estar en cualquier partida del asiento).
-            // En las facturas rectificativas la base es negativa, por lo que resta
-            if (isset($basesByAsiento[$line->idasiento]) && abs($basesByAsiento[$line->idasiento]) > 0.0) {
-                $baseImponible = $basesByAsiento[$line->idasiento];
-                static::$baseRetenciones += $baseImponible;
-                static::$recipientDetails[$codcontrapartida]['base'] += $baseImponible;
-                // marcar como procesado para no duplicar si hay múltiples retenciones en el mismo asiento
-                $basesByAsiento[$line->idasiento] = 0;
-            }
-        }
-
-        // calculamos la base de retenciones de sueldos y salarios (casilla 02) y la agrupamos por perceptor.
-        // La base es neta: el debe suma y el haber (regularización o anulación de una nómina) resta
-        foreach (static::$baseLines as $line) {
-            $codcontrapartida = $line->codcontrapartida;
-            if (empty($codcontrapartida)) {
+            // sumamos la base del asiento una sola vez, aunque tenga varias retenciones: la de la factura de
+            // compra o, si no hay factura, la base imponible de sus partidas. En las rectificativas es negativa
+            if (isset($baseDone[$line->idasiento])) {
                 continue;
             }
+            $baseDone[$line->idasiento] = true;
+            $baseImponible = null === $invoice ? ($basesByAsiento[$line->idasiento] ?? 0.0) : $invoice['base'];
+            static::$baseRetenciones += $baseImponible;
+            static::$recipientDetails[$key]['base'] += $baseImponible;
+        }
 
+        // calculamos la base de retenciones de sueldos y salarios y la agrupamos por perceptor: el de su
+        // contrapartida o, si no tiene o no retiene, el único perceptor del asiento. La base es neta: el debe
+        // suma y el haber (regularización o anulación de una nómina) resta
+        foreach (static::$baseLines as $line) {
             $baseNeta = $line->debe - $line->haber;
             static::$baseRetenciones += $baseNeta;
 
-            // inicializar perceptor si no existe
-            static::initRecipient($codcontrapartida);
+            $codcontrapartida = (string)$line->codcontrapartida;
+            $asientoKeys = $asientoRecipients[$line->idasiento] ?? [];
+            $key = Modelo190::TYPE_SUBACCOUNT . ':' . $codcontrapartida;
+            if ($codcontrapartida === '' || false === isset($asientoKeys[$key])) {
+                if (count($asientoKeys) === 1) {
+                    $key = reset($asientoKeys);
+                } elseif ($codcontrapartida !== '') {
+                    $key = static::initRecipient(Modelo190::TYPE_SUBACCOUNT, $codcontrapartida, $codcontrapartida, null, true);
+                } else {
+                    // nómina de varios perceptores sin contrapartida: no se puede repartir
+                    static::$unassignedBase += $baseNeta;
+                    continue;
+                }
+            }
 
-            // sumar base de sueldos
-            static::$recipientDetails[$codcontrapartida]['base'] += $baseNeta;
+            static::$recipientDetails[$key]['base'] += $baseNeta;
         }
 
         // calcular totales debe/haber de entryLines
@@ -607,11 +763,45 @@ class Modelo111
 
         static::$numRecipients = count($recipients);
 
-        // calculamos el total a ingresar (casilla 05)
-        static::$totalIngresar = static::$retencionesPracticadas + static::$ingresosPeriodoAnterior;
+        // calculamos el total a ingresar: retenciones (casilla 28 de la AEAT) menos lo ya ingresado en
+        // autoliquidaciones anteriores del mismo periodo (casilla 29), como en una complementaria
+        static::$totalIngresar = static::$retencionesPracticadas - static::$ingresosPeriodoAnterior;
 
-        // ordenar por código de contrapartida
+        // ordenar por tipo y código del perceptor
         ksort(static::$recipientDetails);
+
+        static::loadGroups111($recipients);
+    }
+
+    /**
+     * Calcula los perceptores, percepciones y retenciones de cada grupo de casillas del modelo 111 según la
+     * clave de percepción de cada perceptor (trabajo 01-03, actividades económicas 07-09, premios 13-15,
+     * aprovechamientos forestales 19-21 y derechos de imagen 25-27). Solo se cuentan como perceptores los que
+     * tienen retenciones. La base de sueldos sin perceptor se suma a los rendimientos del trabajo.
+     *
+     * @param array $recipients claves de los perceptores con retenciones
+     */
+    protected static function loadGroups111(array $recipients): void
+    {
+        static::$groups111 = [];
+        foreach (array_keys(Modelo190::GROUPS_111) as $group) {
+            static::$groups111[$group] = ['perceptores' => 0, 'base' => 0.0, 'retenciones' => 0.0];
+        }
+
+        foreach (static::$recipientDetails as $key => $detail) {
+            $group = $detail['grupo111'];
+            if ($group === '') {
+                continue;
+            }
+
+            static::$groups111[$group]['base'] += $detail['base'];
+            static::$groups111[$group]['retenciones'] += $detail['retencion'];
+            if (isset($recipients[$key])) {
+                static::$groups111[$group]['perceptores']++;
+            }
+        }
+
+        static::$groups111[Modelo190::GROUP_WORK]['base'] += static::$unassignedBase;
     }
 
     /**
@@ -654,5 +844,49 @@ class Modelo111
         }
 
         return $reversalAsientos;
+    }
+
+    /**
+     * Devuelve los datos propuestos del modelo 190 para un proveedor: NIF y razón social del proveedor (o los
+     * de la factura), provincia según el código postal de su dirección (o el de la factura) y clave según el
+     * porcentaje de retención de la factura.
+     *
+     * @param string $codproveedor código del proveedor
+     * @param array $invoice datos de la factura de compra
+     *
+     * @return array
+     */
+    protected static function supplierDefaults(string $codproveedor, array $invoice): array
+    {
+        [$clave, $subclave] = Modelo190::claveFromRetention((float)($invoice['irpf'] ?? 0));
+        $defaults = [
+            'cifnif' => $invoice['cifnif'] ?? '',
+            'nombre' => $invoice['nombre'] ?? '',
+            'codprovincia' => Modelo190::provinceFromPostalCode($invoice['codpostal'] ?? '', $invoice['codpais'] ?? ''),
+            'clave' => $clave,
+            'subclave' => $subclave,
+        ];
+
+        $proveedor = new Proveedor();
+        if (false === $proveedor->load($codproveedor)) {
+            return $defaults;
+        }
+
+        if (!empty($proveedor->cifnif)) {
+            $defaults['cifnif'] = $proveedor->cifnif;
+        }
+        if (!empty($proveedor->razonsocial)) {
+            $defaults['nombre'] = $proveedor->razonsocial;
+        }
+
+        $address = $proveedor->getDefaultAddress();
+        if ($address->exists()) {
+            $province = Modelo190::provinceFromPostalCode($address->codpostal, $address->codpais);
+            if ($province !== '') {
+                $defaults['codprovincia'] = $province;
+            }
+        }
+
+        return $defaults;
     }
 }

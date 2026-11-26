@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Document   : modelo190_perceptores.xml
+    Author     : Daniel Fernández Giménez
+    Description:
+        Datos de cada perceptor del modelo 190 por ejercicio: identificación (NIF, nombre, provincia),
+        clave y subclave de percepción y datos adicionales de los trabajadores (registro tipo 2).
+        El perceptor se identifica por su origen (tipo: proveedor o subcuenta) y su código.
+-->
+<table>
+    <column>
+        <name>anionacimiento</name>
+        <type>integer</type>
+    </column>
+    <column>
+        <name>anualidadesalimentos</name>
+        <type>double precision</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>ascdisc33</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>ascdisc33entero</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>ascdisc65</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>ascdisc65entero</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>ascdiscmov</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>ascdiscmoventero</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>ascmayor75</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>ascmayor75entero</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>ascmenor75</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>ascmenor75entero</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>ceutamelilla</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>cifnif</name>
+        <type>character varying(30)</type>
+    </column>
+    <column>
+        <name>clave</name>
+        <type>character varying(1)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>codejercicio</name>
+        <type>character varying(4)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>codigo</name>
+        <type>character varying(20)</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>codprovincia</name>
+        <type>character varying(2)</type>
+    </column>
+    <column>
+        <name>contrato</name>
+        <type>integer</type>
+        <default>1</default>
+    </column>
+    <column>
+        <name>descdisc33</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>descdisc33entero</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>descdisc65</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>descdisc65entero</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>descdiscmov</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>descdiscmoventero</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>discapacidad</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>gastosdeducibles</name>
+        <type>double precision</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>hijo1</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>hijo2</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>hijo3</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>hijosmenores3</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>hijosmenores3entero</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>hijosresto</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>hijosrestoentero</name>
+        <type>integer</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>id</name>
+        <type>serial</type>
+        <null>NO</null>
+    </column>
+    <column>
+        <name>movilidad</name>
+        <type>boolean</type>
+        <default>false</default>
+    </column>
+    <column>
+        <name>nifconyuge</name>
+        <type>character varying(30)</type>
+    </column>
+    <column>
+        <name>nifrepresentante</name>
+        <type>character varying(30)</type>
+    </column>
+    <column>
+        <name>nombre</name>
+        <type>character varying(100)</type>
+    </column>
+    <column>
+        <name>pensioncompensatoria</name>
+        <type>double precision</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>prestamovivienda</name>
+        <type>boolean</type>
+        <default>false</default>
+    </column>
+    <column>
+        <name>reducciones</name>
+        <type>double precision</type>
+        <default>0</default>
+    </column>
+    <column>
+        <name>situacionfamiliar</name>
+        <type>integer</type>
+        <default>3</default>
+    </column>
+    <column>
+        <name>subclave</name>
+        <type>character varying(2)</type>
+    </column>
+    <column>
+        <name>tipo</name>
+        <type>character varying(10)</type>
+        <null>NO</null>
+    </column>
+    <constraint>
+        <name>modelo190_perceptores_pkey</name>
+        <type>PRIMARY KEY (id)</type>
+    </constraint>
+    <constraint>
+        <name>ca_modelo190_perceptores_ejercicios</name>
+        <type>FOREIGN KEY (codejercicio) REFERENCES ejercicios (codejercicio) ON DELETE CASCADE ON UPDATE CASCADE</type>
+    </constraint>
+    <constraint>
+        <name>uniq_modelo190_perceptores</name>
+        <type>UNIQUE (codejercicio, tipo, codigo)</type>
+    </constraint>
+</table>

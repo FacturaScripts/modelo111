@@ -1,6 +1,15 @@
+{#
+    Pantalla de los modelos 111 (trimestral) y 190 (resumen anual).
+    - Trimestres: casillas oficiales del modelo 111 (01-03 trabajo, 07-09 actividades económicas, 28-30
+      liquidación) y opciones del fichero .111.
+    - Anual: declaración del modelo 190, perceptores con su NIF, provincia y clave, y una ventana para editar
+      los datos del modelo 190 de cada perceptor (los formularios de las ventanas van fuera del formulario
+      principal).
+#}
 {% extends "Master/MenuTemplate.html.twig" %}
 
 {% block body %}
+    {% set annual = fsc.period|upper == 'ANNUAL' %}
     <form action="{{ fsc.url() }}" method="post">
         <div class="container-fluid">
             <div class="row">
@@ -20,12 +29,7 @@
                             {% for company in fsc.empresa.all() %}
                                 <optgroup label="{{ company.nombrecorto }}">
                                     {% for exercise in fsc.allExercises(company.idempresa) %}
-                                        {% if exercise.codejercicio == fsc.codejercicio %}
-                                            <option value="{{ exercise.codejercicio }}"
-                                                    selected>{{ exercise.nombre }}</option>
-                                        {% else %}
-                                            <option value="{{ exercise.codejercicio }}">{{ exercise.nombre }}</option>
-                                        {% endif %}
+                                        <option value="{{ exercise.codejercicio }}"{{ exercise.codejercicio == fsc.codejercicio ? ' selected' : '' }}>{{ exercise.nombre }}</option>
                                     {% endfor %}
                                 </optgroup>
                             {% endfor %}
@@ -37,11 +41,7 @@
                         {{ trans('period') }}
                         <select name="period" class="form-select" required>
                             {% for period, label in fsc.allPeriods() %}
-                                {% if period == fsc.period %}
-                                    <option value="{{ period }}" selected>{{ trans(label) }}</option>
-                                {% else %}
-                                    <option value="{{ period }}">{{ trans(label) }}</option>
-                                {% endif %}
+                                <option value="{{ period }}"{{ period == fsc.period ? ' selected' : '' }}>{{ trans(label) }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -58,12 +58,21 @@
                                     <i class="fa-solid fa-download me-1"></i> {{ trans('download') }}
                                 </button>
                                 <ul class="dropdown-menu">
-                                    <li>
-                                        <button type="submit" name="action" value="download"
-                                                class="dropdown-item">
-                                            <i class="fa-solid fa-file me-1"></i> {{ trans('download') }} (.111)
-                                        </button>
-                                    </li>
+                                    {% if annual %}
+                                        <li>
+                                            <button type="submit" name="action" value="download-190"
+                                                    class="dropdown-item">
+                                                <i class="fa-solid fa-file me-1"></i> {{ trans('m190-download') }}
+                                            </button>
+                                        </li>
+                                    {% else %}
+                                        <li>
+                                            <button type="submit" name="action" value="download"
+                                                    class="dropdown-item">
+                                                <i class="fa-solid fa-file me-1"></i> {{ trans('download') }} (.111)
+                                            </button>
+                                        </li>
+                                    {% endif %}
                                     <li>
                                         <button type="submit" name="action" value="download-xlsx"
                                                 class="dropdown-item">
@@ -90,184 +99,549 @@
                 </div>
             </div>
             {% if fsc.result.entryLines is not empty %}
-                <div class="row">
-                    <div class="col">
-                        <div class="card shadow-sm mt-3">
-                            <div class="card-header">
-                                <h2 class="h5 mb-0">
-                                    <i class="fa-regular fa-clipboard fa-fw"></i> {{ trans('summary') }}
-                                </h2>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-sm-6 col-lg-3">
-                                        <div class="mb-3">
-                                            {{ trans('number-recipients') }}
-                                            <div class="input-group">
-                                                <span class="input-group-text">01</span>
-                                                <input type="number" value="{{ fsc.result.numrecipients }}"
-                                                       class="form-control text-end"
-                                                       readonly/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-6 col-lg-3">
-                                        <div class="mb-3">
-                                            {{ trans('withholding-base') }}
-                                            <div class="input-group">
-                                                <span class="input-group-text">02</span>
-                                                <input type="text" value="{{ money(fsc.result.baseRetenciones) }}"
-                                                       class="form-control text-end"
-                                                       readonly/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-6 col-lg-3">
-                                        <div class="mb-3">
-                                            {{ trans('withholdings-made') }}
-                                            <div class="input-group">
-                                                <span class="input-group-text">03</span>
-                                                <input type="text"
-                                                       value="{{ money(fsc.result.retencionesPracticadas) }}"
-                                                       class="form-control text-end"
-                                                       readonly/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-6 col-lg-3">
-                                        <div class="mb-3">
-                                            {{ trans('previous-period-income') }}
-                                            <div class="input-group">
-                                                <span class="input-group-text">04</span>
-                                                <input type="number" name="ingresosanteriores"
-                                                       value="{{ fsc.ingresosPeriodoAnterior }}"
-                                                       class="form-control text-end" step="0.01"/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-6 col-lg-3">
-                                        <div class="mb-3">
-                                            {{ trans('total-to-enter') }}
-                                            <div class="input-group">
-                                                <span class="input-group-text">05</span>
-                                                <input type="text" value="{{ money(fsc.result.totalIngresar) }}"
-                                                       class="form-control text-end"
-                                                       readonly/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% if fsc.result.recipientDetails is not empty %}
-                    <div class="row">
-                        <div class="col">
-                            <div class="card shadow-sm mt-3">
-                                <div class="card-header">
-                                    <h3 class="h5 mb-0">
-                                        <i class="fa-solid fa-users fa-fw"></i> {{ trans('recipients-detail') }}
-                                    </h3>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover mb-0">
-                                            <thead>
-                                            <tr>
-                                                <th>{{ trans('recipient') }}</th>
-                                                <th class="text-end">{{ trans('withholding-base') }}</th>
-                                                <th class="text-end">{{ trans('withholdings-made') }}</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            {% for detail in fsc.result.recipientDetails %}
-                                                <tr>
-                                                    <td>
-                                                        <strong>{{ detail.codcontrapartida }}</strong>
-                                                        {% if detail.descripcion %}
-                                                            <small class="text-muted">{{ detail.descripcion }}</small>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td class="text-end">{{ money(detail.base) }}</td>
-                                                    <td class="text-end">{{ money(detail.retencion) }}</td>
-                                                </tr>
-                                            {% endfor %}
-                                            </tbody>
-                                            <tfoot>
-                                            <tr class="table-active fw-bold">
-                                                <td>{{ trans('total') }}</td>
-                                                <td class="text-end">{{ money(fsc.result.baseRetenciones) }}</td>
-                                                <td class="text-end">{{ money(fsc.result.retencionesPracticadas) }}</td>
-                                            </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                {% if annual %}
+                    {{ block('summary190') }}
+                {% else %}
+                    {{ block('summary111') }}
                 {% endif %}
-                <div class="row">
-                    <div class="col">
-                        <div class="card shadow-sm mt-3">
-                            <div class="card-header">
-                                <h3 class="h5 mb-0">
-                                    <i class="fa-regular fa-copy fa-fw"></i> {{ trans('accounting-entries') }}
-                                </h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead>
-                                        <tr>
-                                            <th>{{ trans('accounting-entry') }}</th>
-                                            <th>{{ trans('subaccount') }}</th>
-                                            <th>{{ trans('counterpart') }}</th>
-                                            <th>{{ trans('concept') }}</th>
-                                            <th class="text-end">{{ trans('debit') }}</th>
-                                            <th class="text-end">{{ trans('credit') }}</th>
-                                            <th class="text-end">{{ trans('date') }}</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {% for item in fsc.result.entryLines %}
-                                            <tr>
-                                                <td>
-                                                    <a href="{{ item.url() }}">{{ item.numero }}</a>
-                                                </td>
-                                                <td>{{ item.codsubcuenta }}</td>
-                                                <td>{{ item.codcontrapartida }}</td>
-                                                <td>{{ item.concepto | raw }}</td>
-                                                <td class="text-end">{{ money(item.debe) }}</td>
-                                                <td class="text-end">{{ money(item.haber) }}</td>
-                                                <td class="text-end">{{ item.fecha | date('d-m-Y') }}</td>
-                                            </tr>
-                                        {% else %}
-                                            <tr class="table-warning">
-                                                <td colspan="7">{{ trans('no-data') }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                        </tbody>
-                                        <tfoot>
-                                        <tr class="table-active fw-bold">
-                                            <td colspan="4">{{ trans('total') }}</td>
-                                            <td class="text-end">{{ money(fsc.result.totalDebe) }}</td>
-                                            <td class="text-end">{{ money(fsc.result.totalHaber) }}</td>
-                                            <td></td>
-                                        </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             {% else %}
                 <div class="alert alert-warning">{{ trans('no-data') }}</div>
             {% endif %}
         </div>
     </form>
+    {% if fsc.result.entryLines is not empty %}
+        <div class="container-fluid">
+            {% if fsc.result.recipientDetails is not empty %}
+                {{ block('recipients') }}
+            {% endif %}
+            {{ block('entries') }}
+        </div>
+        {% if annual %}
+            {% for detail in fsc.result.recipientDetails %}
+                {{ block('recipientModal') }}
+            {% endfor %}
+            {{ block('subkeyScript') }}
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
+{# casilla de solo lectura con su número oficial #}
+{% macro box(number, label, value) %}
+    <div class="mb-3">
+        {{ label }}
+        <div class="input-group">
+            {% if number %}
+                <span class="input-group-text">{{ number }}</span>
+            {% endif %}
+            <input type="text" value="{{ value }}" class="form-control text-end" readonly/>
+        </div>
+    </div>
+{% endmacro %}
+
+{% block summary111 %}
+    {% import _self as m %}
+    <div class="card shadow-sm mt-3">
+        <div class="card-header">
+            <h2 class="h5 mb-0">
+                <i class="fa-regular fa-clipboard fa-fw"></i> {{ trans('summary') }}
+            </h2>
+        </div>
+        <div class="card-body">
+            {% for group, codes in {'trabajo': ['01', '02', '03'], 'actividades': ['07', '08', '09'], 'premios': ['13', '14', '15'], 'forestales': ['19', '20', '21'], 'imagen': ['25', '26', '27']} %}
+                {% set data = fsc.result.groups111[group] %}
+                {% if group in ['trabajo', 'actividades'] or data.perceptores > 0 or data.base != 0 or data.retenciones != 0 %}
+                    <h3 class="h6">{{ trans('m111-group-' ~ group) }}</h3>
+                    <div class="row">
+                        <div class="col-sm-4 col-lg-3">
+                            {{ m.box(codes[0], trans('number-recipients'), data.perceptores) }}
+                        </div>
+                        <div class="col-sm-4 col-lg-3">
+                            {{ m.box(codes[1], trans('withholding-base'), money(data.base)) }}
+                        </div>
+                        <div class="col-sm-4 col-lg-3">
+                            {{ m.box(codes[2], trans('withholdings-made'), money(data.retenciones)) }}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+            {% if fsc.result.unassignedBase != 0 %}
+                <div class="alert alert-warning">
+                    {{ trans('m111-unassigned-base', {'%amount%': money(fsc.result.unassignedBase)}) }}
+                </div>
+            {% endif %}
+            <h3 class="h6">{{ trans('m111-settlement') }}</h3>
+            <div class="row">
+                <div class="col-sm-4 col-lg-3">
+                    {{ m.box('28', trans('m111-sum-withholdings'), money(fsc.result.retencionesPracticadas)) }}
+                </div>
+                <div class="col-sm-4 col-lg-3">
+                    <div class="mb-3">
+                        {{ trans('previous-period-income') }}
+                        <div class="input-group">
+                            <span class="input-group-text">29</span>
+                            <input type="number" name="ingresosanteriores" value="{{ fsc.ingresosPeriodoAnterior }}"
+                                   class="form-control text-end" step="0.01"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4 col-lg-3">
+                    {{ m.box('30', trans('total-to-enter'), money(fsc.result.totalIngresar)) }}
+                </div>
+            </div>
+            <h3 class="h6">{{ trans('m111-file-options') }}</h3>
+            <div class="row">
+                <div class="col-sm-4 col-lg-3">
+                    <div class="mb-3">
+                        {{ trans('m111-declaration-type') }}
+                        <select name="tipo111" class="form-select">
+                            {% for value in ['', 'I', 'U', 'G', 'N'] %}
+                                <option value="{{ value }}"{{ fsc.options111.tipo == value ? ' selected' : '' }}>{{ trans('m111-type-' ~ (value ?: 'auto')|lower) }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-sm-4 col-lg-3">
+                    <div class="mb-3">
+                        {{ trans('m111-iban') }}
+                        <input type="text" name="iban111" value="{{ fsc.options111.iban }}" maxlength="34"
+                               class="form-control"/>
+                    </div>
+                </div>
+                <div class="col-sm-4 col-lg-3">
+                    <div class="mb-3">
+                        {{ trans('m111-previous-receipt') }}
+                        <input type="text" name="justificante111" value="{{ fsc.options111.justificante }}"
+                               maxlength="13" class="form-control"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block summary190 %}
+    {% import _self as m %}
+    <div class="card shadow-sm mt-3">
+        <div class="card-header">
+            <h2 class="h5 mb-0">
+                <i class="fa-regular fa-clipboard fa-fw"></i> {{ trans('m190-declaration') }}
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-sm-4 col-lg-3">
+                    {{ m.box('', trans('m190-records'), fsc.result.recipientDetails|length) }}
+                </div>
+                <div class="col-sm-4 col-lg-3">
+                    {{ m.box('', trans('withholding-base'), money(fsc.result.baseRetenciones)) }}
+                </div>
+                <div class="col-sm-4 col-lg-3">
+                    {{ m.box('', trans('withholdings-made'), money(fsc.result.retencionesPracticadas)) }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="mb-3">
+                        {{ trans('m190-declaration-number') }}
+                        <input type="text" name="numero190" value="{{ fsc.options190.numero }}" maxlength="13"
+                               class="form-control"/>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="mb-3">
+                        {{ trans('m190-declaration-type') }}
+                        <select name="tipo190" class="form-select">
+                            <option value="">{{ trans('m190-normal') }}</option>
+                            <option value="C"{{ fsc.options190.tipo == 'C' ? ' selected' : '' }}>{{ trans('m190-complementary') }}</option>
+                            <option value="S"{{ fsc.options190.tipo == 'S' ? ' selected' : '' }}>{{ trans('m190-substitute') }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="mb-3">
+                        {{ trans('m190-previous-number') }}
+                        <input type="text" name="numeroanterior190" value="{{ fsc.options190.numeroanterior }}"
+                               maxlength="13" class="form-control"/>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="mb-3">
+                        {{ trans('m190-contact-person') }}
+                        <input type="text" name="contacto190" value="{{ fsc.options190.contacto }}" maxlength="40"
+                               class="form-control"/>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="mb-3">
+                        {{ trans('phone') }}
+                        <input type="text" name="telefono190" value="{{ fsc.options190.telefono }}" maxlength="20"
+                               class="form-control"/>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="mb-3">
+                        {{ trans('email') }}
+                        <input type="email" name="email190" value="{{ fsc.options190.email }}" maxlength="50"
+                               class="form-control"/>
+                    </div>
+                </div>
+            </div>
+            {% if fsc.result.unassignedBase != 0 %}
+                <div class="alert alert-warning">
+                    {{ trans('m111-unassigned-base', {'%amount%': money(fsc.result.unassignedBase)}) }}
+                </div>
+            {% endif %}
+            {% if fsc.errors190 is not empty %}
+                <div class="alert alert-danger mb-2">
+                    <strong>{{ trans('m190-errors') }}</strong>
+                    <ul class="mb-0">
+                        {% for error in fsc.errors190 %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            <div class="alert alert-info mb-0">{{ trans('m190-limitations') }}</div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block recipients %}
+    {% set annual = fsc.period|upper == 'ANNUAL' %}
+    {% set provinces = fsc.provincias190() %}
+    <div class="card shadow-sm mt-3">
+        <div class="card-header">
+            <h3 class="h5 mb-0">
+                <i class="fa-solid fa-users fa-fw"></i> {{ trans('recipients-detail') }}
+            </h3>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th>{{ trans('recipient') }}</th>
+                    <th>{{ trans('cifnif') }}</th>
+                    <th>{{ trans('province') }}</th>
+                    <th>{{ trans('m190-key') }}</th>
+                    <th class="text-end">{{ trans('withholding-base') }}</th>
+                    <th class="text-end">{{ trans('withholdings-made') }}</th>
+                    {% if annual %}
+                        <th class="text-end">{{ trans('status') }}</th>
+                    {% endif %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for detail in fsc.result.recipientDetails %}
+                    {% set errors = annual ? fsc.recipientErrors(detail) : [] %}
+                    <tr>
+                        <td>
+                            <strong>{{ detail.nombre }}</strong>
+                            <small class="text-muted">
+                                {{ detail.tipo == 'proveedor' ? trans('supplier') : trans('subaccount') }} {{ detail.codigo }}
+                            </small>
+                        </td>
+                        <td>{{ detail.cifnif }}</td>
+                        <td>
+                            {% if detail.codprovincia %}
+                                {{ detail.codprovincia }} - {{ provinces[detail.codprovincia] ?? '' }}
+                            {% endif %}
+                        </td>
+                        <td title="{{ detail.perceptor.claveDescription() }}">{{ detail.clave }}{{ detail.subclave ? '.' ~ detail.subclave : '' }}</td>
+                        <td class="text-end">{{ money(detail.base) }}</td>
+                        <td class="text-end">{{ money(detail.retencion) }}</td>
+                        {% if annual %}
+                            <td class="text-end text-nowrap">
+                                {% if errors is not empty %}
+                                    <span class="badge bg-danger" title="{{ errors|join(' ') }}">{{ trans('m190-recipient-errors') }}</span>
+                                {% elseif detail.guardado %}
+                                    <span class="badge bg-success">{{ trans('m190-saved') }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ trans('m190-proposed') }}</span>
+                                {% endif %}
+                                <button type="button" class="btn btn-sm btn-outline-primary ms-1" data-bs-toggle="modal"
+                                        data-bs-target="#recipient{{ loop.index }}">
+                                    <i class="fa-solid fa-pen fa-fw"></i> {{ trans('edit') }}
+                                </button>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                <tr class="table-active fw-bold">
+                    <td colspan="4">{{ trans('total') }}</td>
+                    <td class="text-end">{{ money(fsc.result.baseRetenciones) }}</td>
+                    <td class="text-end">{{ money(fsc.result.retencionesPracticadas) }}</td>
+                    {% if annual %}
+                        <td></td>
+                    {% endif %}
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block entries %}
+    <div class="card shadow-sm mt-3">
+        <div class="card-header">
+            <h3 class="h5 mb-0">
+                <i class="fa-regular fa-copy fa-fw"></i> {{ trans('accounting-entries') }}
+            </h3>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th>{{ trans('accounting-entry') }}</th>
+                    <th>{{ trans('subaccount') }}</th>
+                    <th>{{ trans('counterpart') }}</th>
+                    <th>{{ trans('concept') }}</th>
+                    <th class="text-end">{{ trans('debit') }}</th>
+                    <th class="text-end">{{ trans('credit') }}</th>
+                    <th class="text-end">{{ trans('date') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in fsc.result.entryLines %}
+                    <tr>
+                        <td>
+                            <a href="{{ item.url() }}">{{ item.numero }}</a>
+                        </td>
+                        <td>{{ item.codsubcuenta }}</td>
+                        <td>{{ item.codcontrapartida }}</td>
+                        <td>{{ item.concepto | raw }}</td>
+                        <td class="text-end">{{ money(item.debe) }}</td>
+                        <td class="text-end">{{ money(item.haber) }}</td>
+                        <td class="text-end">{{ item.fecha | date('d-m-Y') }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                <tr class="table-active fw-bold">
+                    <td colspan="4">{{ trans('total') }}</td>
+                    <td class="text-end">{{ money(fsc.result.totalDebe) }}</td>
+                    <td class="text-end">{{ money(fsc.result.totalHaber) }}</td>
+                    <td></td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{# campo numérico pequeño de la ventana del perceptor #}
+{% macro count(perceptor, field, max) %}
+    <input type="number" name="recipient_{{ field }}" value="{{ attribute(perceptor, field) }}" min="0" max="{{ max }}"
+           class="form-control form-control-sm text-end"/>
+{% endmacro %}
+
+{% block recipientModal %}
+    {% import _self as m %}
+    {% set p = detail.perceptor %}
+    <div class="modal fade" id="recipient{{ loop.index }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <form action="{{ fsc.url() }}" method="post" class="modal-content">
+                {{ formToken() }}
+                <input type="hidden" name="action" value="save-recipient"/>
+                <input type="hidden" name="codejercicio" value="{{ fsc.codejercicio }}"/>
+                <input type="hidden" name="period" value="{{ fsc.period }}"/>
+                <input type="hidden" name="recipient_tipo" value="{{ detail.tipo }}"/>
+                <input type="hidden" name="recipient_codigo" value="{{ detail.codigo }}"/>
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fa-solid fa-user-pen fa-fw"></i> {{ trans('m190-edit-recipient') }}: {{ detail.nombre }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ trans('close') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>{{ trans('m190-identification') }}</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            {{ trans('cifnif') }}
+                            <input type="text" name="recipient_cifnif" value="{{ p.cifnif }}" maxlength="9" class="form-control" required/>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            {{ trans('m190-name') }}
+                            <input type="text" name="recipient_nombre" value="{{ detail.nombre }}" maxlength="100" class="form-control" required/>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            {{ trans('province') }}
+                            <select name="recipient_codprovincia" class="form-select">
+                                <option value="">------</option>
+                                {% for code, name in fsc.provincias190() %}
+                                    <option value="{{ code }}"{{ p.codprovincia == code ? ' selected' : '' }}>{{ code }} - {{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            {{ trans('m190-key') }}
+                            <select name="recipient_clave" class="form-select m190-clave">
+                                {% for code, name in fsc.claves190() %}
+                                    <option value="{{ code }}"{{ p.clave == code ? ' selected' : '' }}>{{ code }} - {{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            {{ trans('m190-subkey') }}
+                            <select name="recipient_subclave" class="form-select m190-subclave">
+                                <option value="" data-clave="">------</option>
+                                {% for clave, subclaves in fsc.subclaves190() %}
+                                    {% for code, name in subclaves %}
+                                        <option value="{{ code }}" data-clave="{{ clave }}"{{ p.clave == clave and p.subclave == code ? ' selected' : '' }}>{{ clave }}.{{ code }}{{ name != code ? ' - ' ~ name : '' }}</option>
+                                    {% endfor %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            {{ trans('m190-representative-nif') }}
+                            <input type="text" name="recipient_nifrepresentante" value="{{ p.nifrepresentante }}" maxlength="9" class="form-control"/>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            {{ trans('m190-ceuta-melilla') }}
+                            <select name="recipient_ceutamelilla" class="form-select">
+                                {% for value in 0..2 %}
+                                    <option value="{{ value }}"{{ p.ceutamelilla == value ? ' selected' : '' }}>{{ trans('m190-ceuta-melilla-' ~ value) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <h6 class="mt-3">{{ trans('m190-personal-data') }}</h6>
+                    <div class="row">
+                        <div class="col-md-2 mb-2">
+                            {{ trans('m190-birth-year') }}
+                            <input type="number" name="recipient_anionacimiento" value="{{ p.anionacimiento }}" min="1900" max="{{ 'now'|date('Y') }}" class="form-control"/>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            {{ trans('m190-family-situation') }}
+                            <select name="recipient_situacionfamiliar" class="form-select">
+                                {% for value in 1..3 %}
+                                    <option value="{{ value }}"{{ p.situacionfamiliar == value ? ' selected' : '' }}>{{ trans('m190-family-situation-' ~ value) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-2">
+                            {{ trans('m190-spouse-nif') }}
+                            <input type="text" name="recipient_nifconyuge" value="{{ p.nifconyuge }}" maxlength="9" class="form-control"/>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            {{ trans('m190-disability') }}
+                            <select name="recipient_discapacidad" class="form-select">
+                                {% for value in 0..3 %}
+                                    <option value="{{ value }}"{{ p.discapacidad == value ? ' selected' : '' }}>{{ trans('m190-disability-' ~ value) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            {{ trans('m190-contract') }}
+                            <select name="recipient_contrato" class="form-select">
+                                {% for value in 1..4 %}
+                                    <option value="{{ value }}"{{ p.contrato == value ? ' selected' : '' }}>{{ trans('m190-contract-' ~ value) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-2 d-flex align-items-end">
+                            <div class="form-check me-3">
+                                <input type="checkbox" name="recipient_movilidad" value="1" class="form-check-input"
+                                       id="movilidad{{ loop.index }}"{{ p.movilidad ? ' checked' : '' }}/>
+                                <label class="form-check-label" for="movilidad{{ loop.index }}">{{ trans('m190-geographic-mobility') }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" name="recipient_prestamovivienda" value="1" class="form-check-input"
+                                       id="prestamo{{ loop.index }}"{{ p.prestamovivienda ? ' checked' : '' }}/>
+                                <label class="form-check-label" for="prestamo{{ loop.index }}">{{ trans('m190-home-loan') }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="mt-3">{{ trans('m190-amounts') }}</h6>
+                    <div class="row">
+                        {% for field in ['reducciones', 'gastosdeducibles', 'pensioncompensatoria', 'anualidadesalimentos'] %}
+                            <div class="col-md-3 mb-2">
+                                {{ trans('m190-' ~ field) }}
+                                <input type="number" name="recipient_{{ field }}" value="{{ attribute(p, field) }}" min="0" step="0.01" class="form-control text-end"/>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <h6 class="mt-3">{{ trans('m190-family') }}</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-2">
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th class="text-end">{{ trans('m190-total') }}</th>
+                                <th class="text-end">{{ trans('m190-whole') }}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in [
+                                ['m190-descendants-under-3', 'hijosmenores3', 9],
+                                ['m190-descendants-rest', 'hijosresto', 99],
+                                ['m190-descendants-disability-33', 'descdisc33', 99],
+                                ['m190-descendants-disability-mobility', 'descdiscmov', 99],
+                                ['m190-descendants-disability-65', 'descdisc65', 99],
+                                ['m190-ascendants-under-75', 'ascmenor75', 9],
+                                ['m190-ascendants-over-75', 'ascmayor75', 9],
+                                ['m190-ascendants-disability-33', 'ascdisc33', 9],
+                                ['m190-ascendants-disability-mobility', 'ascdiscmov', 9],
+                                ['m190-ascendants-disability-65', 'ascdisc65', 9]
+                            ] %}
+                                <tr>
+                                    <td>{{ trans(row[0]) }}</td>
+                                    <td style="width: 8rem;">{{ m.count(p, row[1], row[2]) }}</td>
+                                    <td style="width: 8rem;">{{ m.count(p, row[1] ~ 'entero', row[2]) }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="row">
+                        {% for number in 1..3 %}
+                            <div class="col-md-4 mb-2">
+                                {{ trans('m190-child-' ~ number) }}
+                                <select name="recipient_hijo{{ number }}" class="form-select">
+                                    {% for value in 0..2 %}
+                                        <option value="{{ value }}"{{ attribute(p, 'hijo' ~ number) == value ? ' selected' : '' }}>{{ trans('m190-child-computation-' ~ value) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('close') }}</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-floppy-disk fa-fw"></i> {{ trans('save') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block subkeyScript %}
+    <script>
+        // muestra en cada ventana de perceptor solo las subclaves de la clave elegida
+        document.querySelectorAll('.m190-clave').forEach(function (claveSelect) {
+            const subSelect = claveSelect.closest('form').querySelector('.m190-subclave');
+            const refresh = function () {
+                const clave = claveSelect.value;
+                let valid = false;
+                subSelect.querySelectorAll('option').forEach(function (option) {
+                    const show = option.dataset.clave === '' || option.dataset.clave === clave;
+                    option.hidden = !show;
+                    option.disabled = !show;
+                    if (show && option.selected) {
+                        valid = true;
+                    }
+                });
+                if (!valid) {
+                    subSelect.value = '';
+                }
+            };
+            claveSelect.addEventListener('change', refresh);
+            refresh();
+        });
+    </script>
 {% endblock %}

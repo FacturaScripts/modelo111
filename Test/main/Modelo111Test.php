@@ -26,8 +26,6 @@ use FacturaScripts\Dinamic\Model\Asiento;
 use FacturaScripts\Dinamic\Model\Ejercicio;
 use FacturaScripts\Dinamic\Model\FacturaCliente;
 use FacturaScripts\Dinamic\Model\FacturaProveedor;
-use FacturaScripts\Dinamic\Model\PagoCliente;
-use FacturaScripts\Dinamic\Model\PagoProveedor;
 use FacturaScripts\Dinamic\Model\Partida;
 use FacturaScripts\Dinamic\Model\Retencion;
 use FacturaScripts\Dinamic\Model\Subcuenta;
@@ -81,7 +79,7 @@ final class Modelo111Test extends Modelo111TestCase
         $this->assertEqualsWithDelta(150.0, $result['retencionesPracticadas'], 0.001);
         $this->assertEqualsWithDelta(150.0, $result['totalIngresar'], 0.001);
         $this->assertSame(1, $result['numRecipients']);
-        $this->assertArrayNotHasKey('5720000000', $result['recipientDetails']);
+        $this->assertArrayNotHasKey('subcuenta:5720000000', $result['recipientDetails']);
     }
 
     public function testEjercicioInexistente(): void
@@ -170,7 +168,7 @@ final class Modelo111Test extends Modelo111TestCase
         $this->assertEqualsWithDelta(1000.0, $result['baseRetenciones'], 0.001);
         $this->assertEqualsWithDelta(150.0, $result['totalIngresar'], 0.001);
         $this->assertSame(1, $result['numRecipients']);
-        $this->assertArrayNotHasKey('4100000000', $result['recipientDetails']);
+        $this->assertArrayNotHasKey('subcuenta:4100000000', $result['recipientDetails']);
     }
 
     public function testGenerate(): void
@@ -213,10 +211,10 @@ final class Modelo111Test extends Modelo111TestCase
         $exercise = $this->getCurrentExercise();
         $this->createNominaAsiento($exercise, 2000.0, 300.0);
 
-        $result = Modelo111::generate($exercise->codejercicio, $this->getCurrentPeriod(), -100.0);
+        $result = Modelo111::generate($exercise->codejercicio, $this->getCurrentPeriod(), 100.0);
         $this->assertNotEmpty($result);
 
-        // casilla 05 = retenciones practicadas + resultados de periodos anteriores
+        // total a ingresar = retenciones practicadas (casilla 28) - ingresado en autoliquidaciones anteriores (casilla 29)
         $this->assertEqualsWithDelta(300.0, $result['retencionesPracticadas'], 0.001);
         $this->assertEqualsWithDelta(200.0, $result['totalIngresar'], 0.001);
     }
@@ -357,8 +355,8 @@ final class Modelo111Test extends Modelo111TestCase
         $this->assertEqualsWithDelta(1500.0, $result['totalHaber'], 0.001);
 
         // detalle del perceptor con los importes netos
-        $this->assertArrayHasKey('4650000000', $result['recipientDetails']);
-        $recipient = $result['recipientDetails']['4650000000'];
+        $this->assertArrayHasKey('subcuenta:4650000000', $result['recipientDetails']);
+        $recipient = $result['recipientDetails']['subcuenta:4650000000'];
         $this->assertEqualsWithDelta(7000.0, $recipient['base'], 0.001);
         $this->assertEqualsWithDelta(1000.0, $recipient['retencion'], 0.001);
     }
@@ -442,51 +440,6 @@ final class Modelo111Test extends Modelo111TestCase
         $this->assertEqualsWithDelta($before['totalIngresar'], $after['totalIngresar'], 0.001);
     }
 
-    private function createNominaAsiento(Ejercicio $exercise, float $sueldo, float $retencion): Asiento
-    {
-        $asiento = new Asiento();
-        $asiento->codejercicio = $exercise->codejercicio;
-        $asiento->concepto = 'Nómina de prueba';
-        $asiento->fecha = Tools::date();
-        $asiento->idempresa = $exercise->idempresa;
-        $asiento->importe = $sueldo;
-        $this->assertTrue($asiento->save());
-        $this->addCleanup(static function () use ($asiento) {
-            if ($asiento->exists()) {
-                $asiento->delete();
-            }
-        });
-
-        // sueldos y salarios (640) al debe
-        $p1 = new Partida();
-        $p1->idasiento = $asiento->idasiento;
-        $p1->codsubcuenta = '6400000000';
-        $p1->debe = $sueldo;
-        $p1->codcontrapartida = '4650000000';
-        $p1->concepto = $asiento->concepto;
-        $this->assertTrue($p1->save());
-
-        // retención de IRPF (4751) al haber
-        $p2 = new Partida();
-        $p2->idasiento = $asiento->idasiento;
-        $p2->codsubcuenta = '4751000000';
-        $p2->haber = $retencion;
-        $p2->codcontrapartida = '4650000000';
-        $p2->concepto = $asiento->concepto;
-        $this->assertTrue($p2->save());
-
-        // remuneraciones pendientes de pago (465) al haber
-        $p3 = new Partida();
-        $p3->idasiento = $asiento->idasiento;
-        $p3->codsubcuenta = '4650000000';
-        $p3->haber = $sueldo - $retencion;
-        $p3->codcontrapartida = '6400000000';
-        $p3->concepto = $asiento->concepto;
-        $this->assertTrue($p3->save());
-
-        return $asiento;
-    }
-
     /**
      * Crea el asiento de regularización de una nómina, inverso al de createNominaAsiento(): sueldos (640)
      * al haber, la retención revertida (4751) al debe y remuneraciones pendientes de pago (465) al debe.
@@ -540,50 +493,5 @@ final class Modelo111Test extends Modelo111TestCase
         $this->assertTrue($p3->save());
 
         return $asiento;
-    }
-
-    /**
-     * Crea las tablas de pagos de clientes y proveedores si no existen. Al borrar una factura se borran sus
-     * recibos, que consultan sus pagos dentro de una transacción, donde no se pueden crear tablas: si la
-     * tabla no existe, el borrado falla y la factura y su asiento se quedan en la base de datos.
-     */
-    private function ensurePaymentTables(): void
-    {
-        new PagoCliente();
-        new PagoProveedor();
-    }
-
-    private function getCurrentExercise(): Ejercicio
-    {
-        $exercise = new Ejercicio();
-        $exercise->idempresa = Tools::settings('default', 'idempresa');
-        $this->assertTrue($exercise->loadFromDate(Tools::date()));
-        return $exercise;
-    }
-
-    private function getCurrentPeriod(): string
-    {
-        return 'T' . ceil((int)date('n') / 3);
-    }
-
-    /**
-     * Devuelve la retención del 15%, creándola (y programando su borrado) si no existe.
-     *
-     * @return Retencion
-     */
-    private function getRetencion15(): Retencion
-    {
-        $retencion = new Retencion();
-        if (false === $retencion->loadFromPercentage(15)) {
-            $retencion->codretencion = 'T111';
-            $retencion->descripcion = 'IRPF 15% test';
-            $retencion->porcentaje = 15;
-            $retencion->codsubcuentaacr = '4751000000';
-            $this->assertTrue($retencion->save());
-            $this->addCleanup(static function () use ($retencion) {
-                $retencion->delete();
-            });
-        }
-        return $retencion;
     }
 }
