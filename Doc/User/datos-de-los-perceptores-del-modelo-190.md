@@ -14,7 +14,7 @@ Cuando guardas los datos de un perceptor, su estado pasa a **Guardado** en ese e
 
 ## ✏️ Cómo editar un perceptor
 
-1. Abre **menú Informes** → **Modelos fiscales** → **Modelos 111 y 190**.
+1. Abre **menú Informes** → **Fiscalidad España** → **Modelos 111 y 190**.
 2. Elige el **Ejercicio**, el periodo **Anual (Modelo 190)** y pulsa **Previsualizar**.
 3. En el listado de **Perceptores**, pulsa **Editar** en la fila del perceptor. Se abre la ventana **Datos del modelo 190** con su nombre.
 4. Rellena los datos que se explican a continuación.

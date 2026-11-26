@@ -18,10 +18,10 @@ Las retenciones se leen de la contabilidad, así que las nóminas y las facturas
 ## 📋 Cómo se rellena
 
 1. Pulsa el menú **Informes**.
-2. Pasa el ratón por **Modelos fiscales**.
+2. Pasa el ratón por **Fiscalidad España**.
 3. Elige **Modelos 111 y 190**.
 
-![Menú Informes con el submenú Modelos fiscales y la opción Modelos 111 y 190 marcada](../Assets/como-hacer-el-modelo-111/01-menu-modelos-111-y-190.png)
+![Menú Informes con el submenú Fiscalidad España y la opción Modelos 111 y 190 marcada](../Assets/como-hacer-el-modelo-111/01-menu-modelos-111-y-190.png)
 
 Ahora elige qué declaración quieres ver:
 

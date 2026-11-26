@@ -13,7 +13,7 @@ Tienes que presentarlo una vez al año si has practicado retenciones del IRPF en
 
 ## 📋 Cómo se rellena
 
-1. Abre **menú Informes** → **Modelos fiscales** → **Modelos 111 y 190**, como en [Cómo hacer el Modelo 111](como-hacer-el-modelo-111.md).
+1. Abre **menú Informes** → **Fiscalidad España** → **Modelos 111 y 190**, como en [Cómo hacer el Modelo 111](como-hacer-el-modelo-111.md).
 2. Elige el **Ejercicio**.
 3. En **Periodo**, elige **Anual (Modelo 190)**.
 4. Pulsa **Previsualizar**.

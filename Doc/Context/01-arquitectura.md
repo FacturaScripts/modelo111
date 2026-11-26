@@ -12,7 +12,7 @@ estructura: cálculo, respuesta de la API y fichero.
 | Pieza | Archivo | Qué hace |
 |---|---|---|
 | Inicio | `Init.php` | Registra `GET /api/3/modelo111` y `/api/3/modelo190` y los añade como recursos de la API. |
-| Pantalla | `Controller/Modelo111.php`, `View/Modelo111.html.twig` | Menú Informes, Modelos fiscales. Acciones: descarga `.111` y `.190`, Excel, PDF, guardar perceptor y generar asientos. |
+| Pantalla | `Controller/Modelo111.php`, `View/Modelo111.html.twig` | Menú Informes, Fiscalidad España (submenú `taxation-spain`). Acciones: descarga `.111` y `.190`, Excel, PDF, guardar perceptor y generar asientos. |
 | Cálculo 111 | `Lib/Modelo111.php` | Clase estática con el cálculo de retenciones, bases y perceptores y la creación de los asientos de obligación y pago. |
 | Reglas 190 | `Lib/Modelo190.php` | Catálogos (claves, subclaves, provincias), grupos de casillas del 111, validación y datos propuestos. |
 | Ficheros | `Lib/Modelo111File.php`, `Lib/Modelo190File.php`, `Lib/Modelo111FileTrait.php` | Fichero `.111` (páginas de 1000 posiciones) y `.190` (registros de 500). El trait da el formato de campos. |
