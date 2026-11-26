@@ -1,0 +1,45 @@
+{
+ "base_url": "https://fs.localhost/",
+ "login": true,
+ "output_dir": "Doc/Assets/como-se-calcula-el-modelo-111",
+ "redact": {
+  "keep": [],
+  "replace": {
+   "FS": "Mi Empresa",
+   "Laura Martín Ortega": "Persona Ejemplo",
+   "Pedro Pérez Gil (asesoría fiscal)": "Profesional Ejemplo 1",
+   "Pedro Pérez Gil": "Profesional Ejemplo 1",
+   "ROMERO DIAZ JAVIER": "TRABAJADOR EJEMPLO 1",
+   "Javier Romero Díaz": "Trabajador Ejemplo 1",
+   "CASTRO VIDAL ELENA": "TRABAJADORA EJEMPLO 2",
+   "Elena Castro Vidal": "Trabajadora Ejemplo 2",
+   "OVH Hispano S.L.": "Proveedor Ejemplo 1",
+   "Daniel Fernández": "Trabajador Ejemplo 3",
+   "Ana Ruiz Molina (diseño gráfico)": "Profesional Ejemplo 2",
+   "Ana Ruiz Molina": "Profesional Ejemplo 2",
+   "OVH": "Proveedor Ejemplo 1"
+  }
+ },
+ "captures": [
+  {
+   "name": "01-retenciones-revertidas-en-un-asiento",
+   "url": "Modelo111?codejercicio=2026&period=T1",
+   "highlight": [
+    {
+     "target": "form + .container-fluid >> text=Base de retenciones",
+     "label": "1"
+    },
+    {
+     "target": "form + .container-fluid >> text=Debe",
+     "label": "2"
+    },
+    {
+     "target": "form + .container-fluid >> text=Haber",
+     "label": "3"
+    }
+   ],
+   "clip": "form + .container-fluid",
+   "margin": 12
+  }
+ ]
+}

@@ -1,0 +1,69 @@
+{
+    "User": {
+        "como-hacer-el-modelo-111.md": {
+            "title": "Cómo hacer el Modelo 111",
+            "title_short": "Modelo 111",
+            "permalink": "como-hacer-el-modelo-111",
+            "ordernum": 100,
+            "imageurl": "Doc/Assets/como-hacer-el-modelo-111/03-casillas-del-modelo-111.png",
+            "icon": "fa-solid fa-book",
+            "color": "primary",
+            "keywords": "modelo 111, retenciones IRPF, declaración trimestral, fichero 111, AEAT, nóminas, profesionales, casillas, asiento de pago",
+            "controllers": "Modelo111",
+            "visibility": true,
+            "idpublication": 1976
+        },
+        "como-hacer-el-modelo-190.md": {
+            "title": "Cómo hacer el Modelo 190",
+            "title_short": "Modelo 190",
+            "permalink": "como-hacer-el-modelo-190",
+            "ordernum": 110,
+            "imageurl": "Doc/Assets/como-hacer-el-modelo-190/03-perceptores-con-estado-y-editar.png",
+            "icon": "fa-solid fa-file-lines",
+            "color": "primary",
+            "keywords": "modelo 190, resumen anual retenciones, fichero 190, AEAT, perceptores, claves y subclaves",
+            "controllers": "Modelo111",
+            "visibility": true,
+            "idpublication": 2571
+        },
+        "datos-de-los-perceptores-del-modelo-190.md": {
+            "title": "Datos de los perceptores del Modelo 190",
+            "title_short": "Datos de los perceptores",
+            "permalink": "datos-de-los-perceptores-del-modelo-190",
+            "parent": "como-hacer-el-modelo-190.md",
+            "ordernum": 120,
+            "imageurl": "Doc/Assets/datos-de-los-perceptores-del-modelo-190/01-identificacion-y-clave.png",
+            "icon": "fa-solid fa-user-pen",
+            "color": "primary",
+            "keywords": "modelo 190, perceptor, clave de percepción, subclave, NIF, provincia, datos familiares, descendientes, editar",
+            "controllers": "Modelo111",
+            "visibility": true
+        },
+        "como-se-calcula-el-modelo-111.md": {
+            "title": "Cómo se calcula el Modelo 111",
+            "title_short": "Cómo se calcula",
+            "permalink": "como-se-calcula-el-modelo-111",
+            "parent": "como-hacer-el-modelo-111.md",
+            "ordernum": 130,
+            "imageurl": "Doc/Assets/como-se-calcula-el-modelo-111/01-retenciones-revertidas-en-un-asiento.png",
+            "icon": "fa-solid fa-calculator",
+            "color": "primary",
+            "keywords": "cálculo modelo 111, retenciones netas, 4751, IRPFPR, IRPFA, casilla 29, casilla 30, claves modelo 190",
+            "controllers": "Modelo111",
+            "visibility": true
+        }
+    },
+    "Dev": {
+        "api-modelos-111-190.md": {
+            "title": "API REST de los modelos 111 y 190",
+            "title_short": "API modelos 111 y 190",
+            "permalink": "api-modelos-111-190",
+            "ordernum": 100,
+            "icon": "fa-solid fa-plug",
+            "color": "info",
+            "keywords": "api,rest,modelo 111,modelo 190,retenciones,irpf,aeat,perceptores,token,curl,mcp",
+            "controllers": "ApiModelo111,ApiModelo190",
+            "visibility": true
+        }
+    }
+}

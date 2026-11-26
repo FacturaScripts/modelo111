@@ -1,0 +1,195 @@
+{
+    "base_url": "https://fs.localhost/",
+    "login": true,
+    "output_dir": "Doc/Assets/como-hacer-el-modelo-111",
+    "redact": {
+        "keep": [],
+        "replace": {
+            "FS": "Mi Empresa",
+            "Laura Martín Ortega": "Persona Ejemplo",
+            "Pedro Pérez Gil (asesoría fiscal)": "Profesional Ejemplo 1",
+            "Pedro Pérez Gil": "Profesional Ejemplo 1",
+            "ROMERO DIAZ JAVIER": "TRABAJADOR EJEMPLO 1",
+            "Javier Romero Díaz": "Trabajador Ejemplo 1",
+            "CASTRO VIDAL ELENA": "TRABAJADORA EJEMPLO 2",
+            "Elena Castro Vidal": "Trabajadora Ejemplo 2",
+            "Ana Ruiz Molina (diseño gráfico)": "Profesional Ejemplo 2",
+            "Ana Ruiz Molina": "Profesional Ejemplo 2",
+            "OVH Hispano S.L.": "Proveedor Ejemplo 1",
+            "Daniel Fernández": "Trabajador Ejemplo 3",
+            "OVH": "Proveedor Ejemplo 1"
+        }
+    },
+    "captures": [
+        {
+            "name": "01-menu-modelos-111-y-190",
+            "url": "Dashboard",
+            "steps": [
+                {
+                    "click": "text=Informes"
+                },
+                {
+                    "eval": "const a=[...document.querySelectorAll('.dropdown-menu.show a')].find(x=>x.textContent.trim()=='Modelos fiscales'); a.parentElement.querySelector('.dropdown-menu').classList.add('show')"
+                }
+            ],
+            "highlight": [
+                {
+                    "target": "text=Informes",
+                    "label": "1"
+                },
+                {
+                    "target": ".dropdown-menu.show >> text=Modelos fiscales",
+                    "label": "2"
+                },
+                {
+                    "target": ".dropdown-menu.show >> text=Modelos 111 y 190",
+                    "label": "3"
+                }
+            ],
+            "clip": [
+                "nav.navbar",
+                ".dropdown-menu.show .dropdown-menu.show"
+            ]
+        },
+        {
+            "name": "02-ejercicio-y-periodo",
+            "url": "Modelo111?codejercicio=MF25&period=T1",
+            "highlight": [
+                {
+                    "target": "select[name=\"codejercicio\"]",
+                    "label": "1"
+                },
+                {
+                    "target": "select[name=\"period\"]",
+                    "label": "2"
+                },
+                {
+                    "target": "text=Previsualizar",
+                    "label": "3"
+                }
+            ],
+            "clip": [
+                "nav.navbar",
+                "text=Previsualizar"
+            ]
+        },
+        {
+            "name": "03-casillas-del-modelo-111",
+            "highlight": [
+                {
+                    "target": "text=Rendimientos del trabajo",
+                    "label": "1"
+                },
+                {
+                    "target": "text=Rendimientos de actividades económicas",
+                    "label": "2"
+                },
+                {
+                    "target": "text=Liquidación",
+                    "label": "3"
+                },
+                {
+                    "target": "text=Total a ingresar",
+                    "label": "4"
+                }
+            ],
+            "clip": [
+                "text=Resumen",
+                "text=Total a ingresar"
+            ],
+            "margin": 24,
+            "url": "Modelo111?codejercicio=MF25&period=T1"
+        },
+        {
+            "name": "04-perceptores-y-asientos",
+            "highlight": [
+                {
+                    "target": "text=Perceptores",
+                    "label": "1"
+                },
+                {
+                    "target": "text=Asientos",
+                    "label": "2"
+                }
+            ],
+            "clip": "form + .container-fluid",
+            "margin": 12,
+            "url": "Modelo111?codejercicio=MF25&period=T1"
+        },
+        {
+            "name": "05-liquidacion-y-datos-del-fichero",
+            "highlight": [
+                {
+                    "target": "input[name=\"ingresosanteriores\"]",
+                    "label": "1"
+                },
+                {
+                    "target": "select[name=\"tipo111\"]",
+                    "label": "2"
+                },
+                {
+                    "target": "input[name=\"iban111\"]",
+                    "label": "3"
+                },
+                {
+                    "target": "input[name=\"justificante111\"]",
+                    "label": "4"
+                }
+            ],
+            "clip": [
+                "text=Liquidación",
+                "input[name=\"justificante111\"]"
+            ],
+            "margin": 20,
+            "url": "Modelo111?codejercicio=MF25&period=T1"
+        },
+        {
+            "name": "06-botones-descargar-imprimir-y-asientos",
+            "steps": [
+                {
+                    "scroll_to": "text=Previsualizar"
+                },
+                {
+                    "click": "text=Descargar"
+                }
+            ],
+            "highlight": [
+                {
+                    "target": "text=Descargar",
+                    "label": "1"
+                },
+                {
+                    "target": ".dropdown-menu.show >> text=Descargar (.111)",
+                    "label": "2"
+                },
+                {
+                    "target": ".dropdown-menu.show >> text=Descargar Excel",
+                    "label": "3"
+                },
+                {
+                    "target": "text=Imprimir",
+                    "label": "4"
+                },
+                {
+                    "target": "text=Generar asientos",
+                    "label": "5"
+                }
+            ],
+            "clip": [
+                "text=Previsualizar",
+                ".dropdown-menu.show"
+            ],
+            "margin": 24,
+            "url": "Modelo111?codejercicio=MF25&period=T1"
+        },
+        {
+            "name": "07-avisos-al-descargar-el-fichero",
+            "url": "Modelo111?codejercicio=2026&period=T1&action=download",
+            "clip": [
+                "nav.navbar",
+                "text=Previsualizar"
+            ],
+            "margin": 24
+        }
+    ]
+}

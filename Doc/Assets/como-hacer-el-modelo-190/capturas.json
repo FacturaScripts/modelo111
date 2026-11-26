@@ -1,0 +1,126 @@
+{
+    "base_url": "https://fs.localhost/",
+    "login": true,
+    "output_dir": "Doc/Assets/como-hacer-el-modelo-190",
+    "redact": {
+        "keep": [],
+        "replace": {
+            "FS": "Mi Empresa",
+            "Laura Martín Ortega": "Persona Ejemplo",
+            "Pedro Pérez Gil (asesoría fiscal)": "Profesional Ejemplo 1",
+            "Pedro Pérez Gil": "Profesional Ejemplo 1",
+            "ROMERO DIAZ JAVIER": "TRABAJADOR EJEMPLO 1",
+            "Javier Romero Díaz": "Trabajador Ejemplo 1",
+            "CASTRO VIDAL ELENA": "TRABAJADORA EJEMPLO 2",
+            "Elena Castro Vidal": "Trabajadora Ejemplo 2",
+            "OVH Hispano S.L.": "Proveedor Ejemplo 1",
+            "Daniel Fernández": "Trabajador Ejemplo 3",
+            "Ana Ruiz Molina (diseño gráfico)": "Profesional Ejemplo 2",
+            "Ana Ruiz Molina": "Profesional Ejemplo 2",
+            "OVH": "Proveedor Ejemplo 1"
+        }
+    },
+    "captures": [
+        {
+            "name": "01-declaracion-del-modelo-190",
+            "url": "Modelo111?codejercicio=MF25&period=ANNUAL",
+            "highlight": [
+                {
+                    "target": "input[name=\"numero190\"]",
+                    "label": "1"
+                },
+                {
+                    "target": "select[name=\"tipo190\"]",
+                    "label": "2"
+                },
+                {
+                    "target": "input[name=\"numeroanterior190\"]",
+                    "label": "3"
+                },
+                {
+                    "target": "input[name=\"contacto190\"]",
+                    "label": "4"
+                },
+                {
+                    "target": "input[name=\"telefono190\"]",
+                    "label": "5"
+                },
+                {
+                    "target": "input[name=\"email190\"]",
+                    "label": "6"
+                }
+            ],
+            "clip": [
+                "text=Declaración del modelo 190",
+                "input[name=\"email190\"]"
+            ],
+            "margin": 20
+        },
+        {
+            "name": "02-errores-que-impiden-generar-el-fichero",
+            "url": "Modelo111?codejercicio=2026&period=ANNUAL",
+            "highlight": [
+                {
+                    "target": ".alert-danger"
+                }
+            ],
+            "clip": [
+                "text=Declaración del modelo 190",
+                ".alert-info"
+            ],
+            "margin": 20
+        },
+        {
+            "name": "03-perceptores-con-estado-y-editar",
+            "url": "Modelo111?codejercicio=MF25&period=ANNUAL",
+            "highlight": [
+                {
+                    "target": "text=Estado",
+                    "label": "1"
+                },
+                {
+                    "target": "text=Editar",
+                    "label": "2"
+                }
+            ],
+            "clip": [
+                "text=Perceptores",
+                ".table-responsive"
+            ],
+            "margin": 12
+        },
+        {
+            "name": "04-botones-de-descarga-del-190",
+            "url": "Modelo111?codejercicio=MF25&period=ANNUAL",
+            "steps": [
+                {
+                    "click": "text=Descargar"
+                }
+            ],
+            "highlight": [
+                {
+                    "target": "text=Descargar",
+                    "label": "1"
+                },
+                {
+                    "target": ".dropdown-menu.show >> text=Descargar fichero (.190)",
+                    "label": "2"
+                },
+                {
+                    "target": ".dropdown-menu.show >> text=Descargar Excel",
+                    "label": "3"
+                },
+                {
+                    "target": "text=Imprimir",
+                    "label": "4"
+                }
+            ],
+            "clip": [
+                "text=Previsualizar",
+                "text=Imprimir",
+                ".dropdown-menu.show"
+            ],
+            "margin": 24
+        }
+    ]
+}

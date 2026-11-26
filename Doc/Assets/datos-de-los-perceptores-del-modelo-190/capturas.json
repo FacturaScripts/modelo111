@@ -1,0 +1,129 @@
+{
+ "base_url": "https://fs.localhost/",
+ "login": true,
+ "output_dir": "Doc/Assets/datos-de-los-perceptores-del-modelo-190",
+ "viewport": {
+  "width": 1280,
+  "height": 2000,
+  "scale": 1
+ },
+ "redact": {
+  "keep": [],
+  "replace": {
+   "FS": "Mi Empresa",
+   "Laura Martín Ortega": "Persona Ejemplo",
+   "Pedro Pérez Gil (asesoría fiscal)": "Profesional Ejemplo 1",
+   "Pedro Pérez Gil": "Profesional Ejemplo 1",
+   "ROMERO DIAZ JAVIER": "TRABAJADOR EJEMPLO 1",
+   "Javier Romero Díaz": "Trabajador Ejemplo 1",
+   "CASTRO VIDAL ELENA": "TRABAJADORA EJEMPLO 2",
+   "Elena Castro Vidal": "Trabajadora Ejemplo 2",
+   "OVH Hispano S.L.": "Proveedor Ejemplo 1",
+   "Daniel Fernández": "Trabajador Ejemplo 3",
+   "Ana Ruiz Molina (diseño gráfico)": "Profesional Ejemplo 2",
+   "Ana Ruiz Molina": "Profesional Ejemplo 2",
+   "OVH": "Proveedor Ejemplo 1"
+  }
+ },
+ "captures": [
+  {
+   "name": "01-identificacion-y-clave",
+   "url": "Modelo111?codejercicio=MF25&period=ANNUAL",
+   "steps": [
+    {
+     "click": "text=Editar",
+     "nth": 0
+    }
+   ],
+   "highlight": [
+    {
+     "target": ".modal.show input[name=recipient_cifnif]",
+     "label": "1"
+    },
+    {
+     "target": ".modal.show input[name=recipient_nombre]",
+     "label": "2"
+    },
+    {
+     "target": ".modal.show select[name=recipient_codprovincia]",
+     "label": "3"
+    },
+    {
+     "target": ".modal.show select[name=recipient_clave]",
+     "label": "4"
+    },
+    {
+     "target": ".modal.show select[name=recipient_subclave]",
+     "label": "5"
+    }
+   ],
+   "clip": [
+    ".modal.show .modal-header",
+    ".modal.show select[name=recipient_ceutamelilla]"
+   ],
+   "margin": 12
+  },
+  {
+   "name": "02-datos-personales-e-importes",
+   "url": "Modelo111?codejercicio=MF25&period=ANNUAL",
+   "steps": [
+    {
+     "click": "text=Editar",
+     "nth": 2
+    }
+   ],
+   "highlight": [
+    {
+     "target": ".modal.show input[name=recipient_anionacimiento]",
+     "label": "1"
+    },
+    {
+     "target": ".modal.show select[name=recipient_situacionfamiliar]",
+     "label": "2"
+    },
+    {
+     "target": ".modal.show select[name=recipient_contrato]",
+     "label": "3"
+    },
+    {
+     "target": ".modal.show input[name=recipient_gastosdeducibles]",
+     "label": "4"
+    }
+   ],
+   "clip": [
+    ".modal.show .modal-body h6:nth-of-type(2)",
+    ".modal.show input[name=recipient_gastosdeducibles]"
+   ],
+   "margin": 16
+  },
+  {
+   "name": "03-descendientes-y-guardar",
+   "url": "Modelo111?codejercicio=MF25&period=ANNUAL",
+   "steps": [
+    {
+     "click": "text=Editar",
+     "nth": 2
+    }
+   ],
+   "highlight": [
+    {
+     "target": ".modal.show input[name=recipient_hijosmenores3]",
+     "label": "1"
+    },
+    {
+     "target": ".modal.show select[name=recipient_hijo1]",
+     "label": "2"
+    },
+    {
+     "target": ".modal.show .modal-footer >> text=Guardar",
+     "label": "3"
+    }
+   ],
+   "clip": [
+    ".modal.show .modal-body h6:nth-of-type(4)",
+    ".modal.show .modal-footer"
+   ],
+   "margin": 16
+  }
+ ]
+}
