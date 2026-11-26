@@ -15,6 +15,15 @@ en el mismo trabajo que cambia el código.
 - [`04-modelo-190-y-ficheros.md`](04-modelo-190-y-ficheros.md): ficheros `.111` y `.190`, claves propuestas, validación y API.
 - [`05-evolucion.md`](05-evolucion.md): etapas del código según el historial.
 
+## Normativa
+
+- [`Normativa/`](Normativa/): documentación **oficial** de los modelos 111 y 190 (AEAT y BOE), descargada con la skill
+  `download-modelo111` (`.agents/skills/`). Contiene `actual/` (diseños de registro, cuadros de retenciones, normativa del
+  BOE en `actual/normativa/`), `paginas/` (texto de la ayuda técnica, instrucciones y normativa de la Sede),
+  `historico/` (versiones sustituidas), `manifest.json` y [`CHANGELOG.md`](Normativa/CHANGELOG.md) (qué se bajó, versiones
+  vigentes, alertas y lo que queda por descargar a mano). Contrasta con ella cualquier decisión sobre claves, campos o
+  plazos; para refrescarla, ejecuta la skill.
+
 ## Decisiones
 
 - [`0001-retenciones-netas.md`](Decisiones/0001-retenciones-netas.md): por qué haber suma y el debe solo resta en ciertos asientos.

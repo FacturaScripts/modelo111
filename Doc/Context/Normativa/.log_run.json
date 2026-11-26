@@ -1,0 +1,113 @@
+{
+ "nuevos": [
+  "actual/normativa/BOE-A-2022-21459_Orden-HFP-1246-2022.html"
+ ],
+ "modificados": [],
+ "iguales": 39,
+ "errores": [
+  [
+   "https://www.agenciatributaria.es/static_files/AEAT_Desarrolladores/EEDD/Modelo_111/espes111e22v10.docx",
+   "000",
+   "curl: (60) SSL certificate problem: self signed certificate in certificate chain\nMore details here: https://curl.se/docs/sslcerts.html\n\ncurl failed to verify the legitimacy of the server and therefore could not\nestablish a secure connection to it. To learn more about this situation and\nhow to fix it, please visit the web page mentioned above."
+  ],
+  [
+   "https://www.agenciatributaria.es/static_files/AEAT_Desarrolladores/EEDD/Modelo_111/espes111e19v11.doc",
+   "000",
+   "curl: (60) SSL certificate problem: self signed certificate in certificate chain\nMore details here: https://curl.se/docs/sslcerts.html\n\ncurl failed to verify the legitimacy of the server and therefore could not\nestablish a secure connection to it. To learn more about this situation and\nhow to fix it, please visit the web page mentioned above."
+  ],
+  [
+   "https://www.agenciatributaria.es/static_files/AEAT_Desarrolladores/EEDD/Informativas/General/Especificaciones_TGVI_Online.pdf",
+   "000",
+   "curl: (60) SSL certificate problem: self signed certificate in certificate chain\nMore details here: https://curl.se/docs/sslcerts.html\n\ncurl failed to verify the legitimacy of the server and therefore could not\nestablish a secure connection to it. To learn more about this situation and\nhow to fix it, please visit the web page mentioned above."
+  ],
+  [
+   "https://www.agenciatributaria.es/static_files/AEAT_Desarrolladores/EEDD/General/EspecificacionesServiciosDeclaracionesAEAT_ES.pdf",
+   "000",
+   "curl: (60) SSL certificate problem: self signed certificate in certificate chain\nMore details here: https://curl.se/docs/sslcerts.html\n\ncurl failed to verify the legitimacy of the server and therefore could not\nestablish a secure connection to it. To learn more about this situation and\nhow to fix it, please visit the web page mentioned above."
+  ],
+  [
+   "https://www.agenciatributaria.es/static_files/AEAT_Desarrolladores/EEDD/General/consultas.xsd",
+   "000",
+   "curl: (60) SSL certificate problem: self signed certificate in certificate chain\nMore details here: https://curl.se/docs/sslcerts.html\n\ncurl failed to verify the legitimacy of the server and therefore could not\nestablish a secure connection to it. To learn more about this situation and\nhow to fix it, please visit the web page mentioned above."
+  ]
+ ],
+ "paginas_cambiadas": [],
+ "paginas_nuevas": [],
+ "paginas_desaparecidas": [],
+ "enlaces": {
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Procedimiento_ayuda/GI10/Certificado/Certificado_unico_2025_es_es.pdf": "https://sede.agenciatributaria.gob.es/Sede/todas-gestiones/impuestos-tasas/declaraciones-informativas/modelo-190-decla_____moniales-imputaciones-rentas-anual_/certificado-retenciones.html",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2021/Tipos_retenciones_IRPF2021.pdf": "https://sede.agenciatributaria.gob.es/Sede/irpf/retenciones-ingresos-cuenta-pagos-fraccionados/retenciones-ingresos-cuenta/porcentajes-retencion-aplicables-distintas-rentas.html",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2022/Cuadro_tipos_retenciones_IRPF2022.pdf": "https://sede.agenciatributaria.gob.es/Sede/irpf/retenciones-ingresos-cuenta-pagos-fraccionados/retenciones-ingresos-cuenta/porcentajes-retencion-aplicables-distintas-rentas.html",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2023/Cuadro_tipos_retenciones_IRPF2023.pdf": "https://sede.agenciatributaria.gob.es/Sede/irpf/retenciones-ingresos-cuenta-pagos-fraccionados/retenciones-ingresos-cuenta/porcentajes-retencion-aplicables-distintas-rentas.html",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2024/Cuadro_tipos_retenciones_IRPF2024.pdf": "https://sede.agenciatributaria.gob.es/Sede/irpf/retenciones-ingresos-cuenta-pagos-fraccionados/retenciones-ingresos-cuenta/porcentajes-retencion-aplicables-distintas-rentas.html",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2025/Cuadro_tipos_retenciones_IRPF2025.pdf": "https://sede.agenciatributaria.gob.es/Sede/irpf/retenciones-ingresos-cuenta-pagos-fraccionados/retenciones-ingresos-cuenta/porcentajes-retencion-aplicables-distintas-rentas.html",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2026/AEATRetenciones2026.xsd": "https://sede.agenciatributaria.gob.es/Sede/Retenciones.shtml",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2026/ALGORITMO_2026.pdf": "https://sede.agenciatributaria.gob.es/Sede/Retenciones.shtml",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2026/Algoritmo Retenciones-2026_10sept.pdf": "https://sede.agenciatributaria.gob.es/Sede/Retenciones.shtml",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2026/CUADRO_TIPOS_RETENCION_IRPF_2026.pdf": "https://sede.agenciatributaria.gob.es/Sede/Retenciones.shtml",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2026/CUADRO_TIPOS_RETENCION_IRPF_2026_10sept.pdf": "https://sede.agenciatributaria.gob.es/Sede/Retenciones.shtml",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2026/Doc_adicional_W3C_2026.zip": "https://sede.agenciatributaria.gob.es/Sede/Retenciones.shtml",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Programas_ayuda/Retenciones/2026/espeSWRET_2026.pdf": "https://sede.agenciatributaria.gob.es/Sede/Retenciones.shtml",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Tema/Declaraciones_informativas/2025/NOVEDADES_2025.pdf": "https://sede.agenciatributaria.gob.es/Sede/declaraciones-informativas-otros-impuestos-tasas/campana-declaraciones-informativas-2025/todas-novedades-recordatorios.html",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Tema/Declaraciones_informativas/2025/RECORDATORIOS_INF_2025.pdf": "https://sede.agenciatributaria.gob.es/Sede/declaraciones-informativas-otros-impuestos-tasas/campana-declaraciones-informativas-2025/todas-novedades-recordatorios.html",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Tema/IRPF/Retenciones/Cuadros_tipos_retencion/C_tipos_retencion_IRPF_2015_2016.pdf": "https://sede.agenciatributaria.gob.es/Sede/irpf/retenciones-ingresos-cuenta-pagos-fraccionados/retenciones-ingresos-cuenta/porcentajes-retencion-aplicables-distintas-rentas.html",
+  "https://sede.agenciatributaria.gob.es/static_files/Sede/Tema/IRPF/Retenciones/Cuadros_tipos_retencion/C_tipos_retencion_IRPF_2017_2018.pdf": "https://sede.agenciatributaria.gob.es/Sede/irpf/retenciones-ingresos-cuenta-pagos-fraccionados/retenciones-ingresos-cuenta/porcentajes-retencion-aplicables-distintas-rentas.html"
+ },
+ "actualizada": {
+  "declaraciones-informativas-otros-impuestos-tasas-306a0d5e.md": "Página actualizada: 08/abril/2026",
+  "ayuda_consultas-informaticas_declaraciones-infor-ea5c9ac5.md": "Página actualizada: 19/noviembre/2026",
+  "ayuda_consultas-informaticas_declaraciones-infor-07ee3e2e.md": "Página actualizada: 19/noviembre/2026",
+  "ayuda_consultas-informaticas_declaraciones-infor-7a3a574b.md": "Página actualizada: 22/abril/2026",
+  "todas-gestiones_impuestos-tasas_declaraciones-in-bd63b080.md": "Página actualizada: 08/septiembre/2026",
+  "todas-gestiones_impuestos-tasas_declaraciones-in-3ae5b1f0.md": "Página actualizada: 05/marzo/2026",
+  "declaraciones-informativas_campana-declaraciones-4e59cb78.md": "Página actualizada: 13/julio/2026",
+  "ayuda_consultas-informaticas_presentacion-declar-f9839c11.md": "Página actualizada: 19/noviembre/2026",
+  "todas-gestiones_impuestos-tasas_pagos-cuenta_mod-1c0ddaa8.md": "Página actualizada: 09/junio/2026",
+  "ayuda_manuales-videos-folletos_manuales-practico-4328ea23.md": "Página actualizada: 26/marzo/2026",
+  "irpf_retenciones-ingresos-cuenta-pagos-fracciona-8d5764b8.md": "Página actualizada: 18/marzo/2026",
+  "procedimientos_GH01.md": "Página actualizada: 03/agosto/2026",
+  "Retenciones.md": "Página actualizada: 11/septiembre/2026",
+  "ayuda_disenos-registro_modelos-100-199.md": "Página actualizada: 29/septiembre/2026",
+  "ayuda_consultas-informaticas_declaraciones-infor-7fe5fa13.md": "Página actualizada: 19/noviembre/2026",
+  "ayuda_consultas-informaticas_presentacion-declar-d437dede.md": "Página actualizada: 19/noviembre/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-de9f5a33.md": "Página actualizada: 29/mayo/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-ce885327.md": "Página actualizada: 12/diciembre/2025",
+  "declaraciones-informativas-otros-impuestos-tasas-b044cd83.md": "Página actualizada: 12/diciembre/2025",
+  "declaraciones-informativas-otros-impuestos-tasas-ad8f3158.md": "Página actualizada: 18/diciembre/2025",
+  "declaraciones-informativas-otros-impuestos-tasas-b5abb421.md": "Página actualizada: 22/enero/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-446d655c.md": "Página actualizada: 13/agosto/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-df24c168.md": "Página actualizada: 22/enero/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-e0800807.md": "Página actualizada: 01/diciembre/2025",
+  "declaraciones-informativas-otros-impuestos-tasas-7ed79b2b.md": "Página actualizada: 01/diciembre/2025",
+  "ayuda_consultas-informaticas_presentacion-declar-cea70dc4.md": "Página actualizada: 19/noviembre/2026",
+  "ayuda_consultas-informaticas_presentacion-declar-7d7ab6f0.md": "Página actualizada: 07/octubre/2026",
+  "ayuda_consultas-informaticas_presentacion-declar-65091c43.md": "Página actualizada: 19/noviembre/2026",
+  "ayuda_consultas-informaticas_presentacion-declar-7aba227c.md": "Página actualizada: 24/febrero/2026",
+  "ayuda_consultas-informaticas_presentacion-declar-2ad5d48c.md": "Página actualizada: 24/febrero/2026",
+  "ayuda_consultas-informaticas_presentacion-declar-6e62e263.md": "Página actualizada: 19/noviembre/2026",
+  "ayuda_manuales-videos-folletos_manuales-practico-7a870697.md": "Página actualizada: 26/marzo/2026",
+  "irpf_retenciones-ingresos-cuenta-pagos-fracciona-ef8fecb5.md": "Página actualizada: 18/marzo/2026",
+  "irpf_retenciones-ingresos-cuenta-pagos-fracciona-c528d0ed.md": "Página actualizada: 11/septiembre/2026",
+  "irpf_retenciones-ingresos-cuenta-pagos-fracciona-3d2f8abf.md": "Página actualizada: 18/marzo/2026",
+  "irpf_retenciones-ingresos-cuenta-pagos-fracciona-4e4c71c4.md": "Página actualizada: 18/marzo/2026",
+  "irpf_retenciones-ingresos-cuenta-pagos-fracciona-ccb16569.md": "Página actualizada: 16/marzo/2026",
+  "irpf_retenciones-ingresos-cuenta-pagos-fracciona-6babdf7f.md": "Página actualizada: 18/marzo/2026",
+  "irpf_retenciones-ingresos-cuenta-pagos-fracciona-8f4ee1f0.md": "Página actualizada: 16/marzo/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-925c08be.md": "Página actualizada: 22/enero/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-d87fcaa1.md": "Página actualizada: 13/agosto/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-7a1cd0fa.md": "Página actualizada: 13/agosto/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-74558664.md": "Página actualizada: 13/agosto/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-03f09c7a.md": "Página actualizada: 13/agosto/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-7c2536d2.md": "Página actualizada: 13/agosto/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-890fdc95.md": "Página actualizada: 13/agosto/2026",
+  "declaraciones-informativas-otros-impuestos-tasas-f68a7bda.md": "Página actualizada: 13/agosto/2026",
+  "todas-gestiones_impuestos-tasas_declaraciones-in-64872214.md": "Página actualizada: 08/septiembre/2026",
+  "ayuda_manuales-videos-folletos_manuales-practico-73c4aa0e.md": "Página actualizada: 26/marzo/2026",
+  "irpf_retenciones-ingresos-cuenta-pagos-fracciona-60f2ee30.md": "Página actualizada: 16/marzo/2026",
+  "ayuda_manuales-videos-folletos_manuales-practico-630adeec.md": "Página actualizada: 26/marzo/2026",
+  "ayuda_manuales-videos-folletos_manuales-practico-85d15a6f.md": "Página actualizada: 26/marzo/2026",
+  "ayuda_manuales-videos-folletos_manuales-practico-a70f796e.md": "Página actualizada: 26/marzo/2026",
+  "ayuda_manuales-videos-folletos_manuales-practico-f32601d5.md": "Página actualizada: 26/marzo/2026"
+ },
+ "nombres_largos": []
+}
