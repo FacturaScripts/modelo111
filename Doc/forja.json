@@ -11,7 +11,37 @@
             "keywords": "modelo 111, retenciones IRPF, declaración trimestral, fichero 111, AEAT, nóminas, profesionales, casillas, asiento de pago",
             "controllers": "Modelo111",
             "visibility": true,
-            "idpublication": 1976
+            "idpublication": 1976,
+            "assets": {
+                "Assets/como-hacer-el-modelo-111/01-menu-modelos-111-y-190.png": {
+                    "url": "/MyFiles/2026/11/8459_forja_qodyq49dtd_01_menu_modelos_111_y_190.png?myft=62a482e92d0a5ac1f09df1d3b0cc576b8a68ad2d26aab4cd2e54064158782a2e",
+                    "sha256": "620ed26c0f118c8484d8070ab270abf57dd73ad6249b469cd6e7864e16916680"
+                },
+                "Assets/como-hacer-el-modelo-111/02-ejercicio-y-periodo.png": {
+                    "url": "/MyFiles/2026/11/8460_forja_lbfidxyfsj_02_ejercicio_y_periodo.png?myft=5d1c9d2ae1955c3df674620742d318fdbf30b04d744753cae34d3602a451f731",
+                    "sha256": "3a8ad5da9af7ea0e8e3c6c99cff940d144add7a99b47d97512a91f3b29f8a53e"
+                },
+                "Assets/como-hacer-el-modelo-111/03-casillas-del-modelo-111.png": {
+                    "url": "/MyFiles/2026/11/8461_forja_4p3dxrs0cs_03_casillas_del_modelo_111.png?myft=9d8bda10fe362b9a502ccf977a5aef0c212e7bd317fffcb06e7cf6c3f7f2d611",
+                    "sha256": "243e1c2cb4c4d92d81cfcbd40a3df6503affbbeff6e91b488e64c8303ddc4bcf"
+                },
+                "Assets/como-hacer-el-modelo-111/04-perceptores-y-asientos.png": {
+                    "url": "/MyFiles/2026/11/8462_forja_u2b0x5qcis_04_perceptores_y_asientos.png?myft=d32480d55e656e0d4bf28ba594e2a9c01dbdf1ecbe5f031a7cf940fcfb122018",
+                    "sha256": "60a1526015a627e2a6ac5b3c85017acd0b63b63680bf03b593097d0ea90cd7ad"
+                },
+                "Assets/como-hacer-el-modelo-111/05-liquidacion-y-datos-del-fichero.png": {
+                    "url": "/MyFiles/2026/11/8463_forja_5ngeeaff32_05_liquidacion_y_datos_del_fichero.png?myft=11aa2d3019098854e9cc823bab6f102cccbeaa35627636792af1958e5b8fd404",
+                    "sha256": "93ab1125415dcb57c9a7cce5696c81b5d521056794bcd5ed93f357ddd850b269"
+                },
+                "Assets/como-hacer-el-modelo-111/06-botones-descargar-imprimir-y-asientos.png": {
+                    "url": "/MyFiles/2026/11/8464_forja_6qourmxgnn_06_botones_descargar_imprimir_y_asientos.png?myft=01757d52ef5b5c4548ae8c1ee9d491e5428bf94de1183fdc5f2fed9d85360968",
+                    "sha256": "d56734acd266348afd4e39300daa750d2b46571b612e18ee4128d764b48391a5"
+                },
+                "Assets/como-hacer-el-modelo-111/07-avisos-al-descargar-el-fichero.png": {
+                    "url": "/MyFiles/2026/11/8465_forja_rhnd8rbjxr_07_avisos_al_descargar_el_fichero.png?myft=3c05674909d51443c1b35cae40264f14bb3f1e267ce244e82f574ecc28f55e46",
+                    "sha256": "ce4b24c467c6f69c5cdb0893c6b921610f2e966e44c5c8e0cfa4b87b82ff6a54"
+                }
+            }
         },
         "como-hacer-el-modelo-190.md": {
             "title": "Cómo hacer el Modelo 190",
@@ -24,7 +54,25 @@
             "keywords": "modelo 190, resumen anual retenciones, fichero 190, AEAT, perceptores, claves y subclaves",
             "controllers": "Modelo111",
             "visibility": true,
-            "idpublication": 2571
+            "idpublication": 2571,
+            "assets": {
+                "Assets/como-hacer-el-modelo-190/01-declaracion-del-modelo-190.png": {
+                    "url": "/MyFiles/2026/11/8466_forja_fswchibbkn_01_declaracion_del_modelo_190.png?myft=90cfcb5b1989528ea9ae8935a55e238136fb4da29d93cebcf010a9021fb4a6a2",
+                    "sha256": "de3a9dc4314c990f7eafa28e90e4462b32759320f51291cdc5ddd97669df9881"
+                },
+                "Assets/como-hacer-el-modelo-190/03-perceptores-con-estado-y-editar.png": {
+                    "url": "/MyFiles/2026/11/8467_forja_ruvkrmdwty_03_perceptores_con_estado_y_editar.png?myft=6011b6d81758ebd415e5bb56373629ec9890439e9bd993fda2bdc56ae3db5762",
+                    "sha256": "bf453db91c728f1046322289e376c0977c5140576dad98f64750834ada4ff2b9"
+                },
+                "Assets/como-hacer-el-modelo-190/02-errores-que-impiden-generar-el-fichero.png": {
+                    "url": "/MyFiles/2026/11/8468_forja_ibkkuwxkoc_02_errores_que_impiden_generar_el_fichero.png?myft=baac4158fef2b2df00f6da1591929f2a77593f5129eb4cd47a55e2d44b3616c0",
+                    "sha256": "eb44e3a358db9d9a5570d7d69c1f1394cd7a15433020d9e28b694e1ea892e640"
+                },
+                "Assets/como-hacer-el-modelo-190/04-botones-de-descarga-del-190.png": {
+                    "url": "/MyFiles/2026/11/8469_forja_tmsnt9sti2_04_botones_de_descarga_del_190.png?myft=bb160f9e3fcb7d518c955efcf198b1d2394d690ad72f2c2bd7a56f04f5d0fa30",
+                    "sha256": "cdf766338965dd7ef261bac98a6baaad3f896022923320e7fc02dcd8c91498eb"
+                }
+            }
         },
         "datos-de-los-perceptores-del-modelo-190.md": {
             "title": "Datos de los perceptores del Modelo 190",
@@ -37,7 +85,22 @@
             "color": "primary",
             "keywords": "modelo 190, perceptor, clave de percepción, subclave, NIF, provincia, datos familiares, descendientes, editar",
             "controllers": "Modelo111",
-            "visibility": true
+            "visibility": true,
+            "idpublication": 5099,
+            "assets": {
+                "Assets/datos-de-los-perceptores-del-modelo-190/01-identificacion-y-clave.png": {
+                    "url": "/MyFiles/2026/11/8470_forja_8rkcpaueb6_01_identificacion_y_clave.png?myft=014211152e6615421a8141d41a6b1c24e7a9bce9adf386727f37c780a53a0723",
+                    "sha256": "da069ba780cc45736ad96c865562b28a1e6af28cb167ee2d7aa414e1e0f9c5cb"
+                },
+                "Assets/datos-de-los-perceptores-del-modelo-190/02-datos-personales-e-importes.png": {
+                    "url": "/MyFiles/2026/11/8471_forja_zvjhu2hiru_02_datos_personales_e_importes.png?myft=5e8b944e2e99ddd9c500d5c8bf0fd114856f6a16cc7bb0c20b7ff5320e644e1d",
+                    "sha256": "76587b1150be478bd69589c03ca5f45d7d21da7833e8c09540b35b3047e62145"
+                },
+                "Assets/datos-de-los-perceptores-del-modelo-190/03-descendientes-y-guardar.png": {
+                    "url": "/MyFiles/2026/11/8472_forja_vycmcefduq_03_descendientes_y_guardar.png?myft=dd976c9ab4d39aabd0361f07e81f864498cf7986ec738ff5e32882759f83aab6",
+                    "sha256": "08da4847511454c3fbcf13d35971190f72b7d99f3f519134e7f46fb4c0227733"
+                }
+            }
         },
         "como-se-calcula-el-modelo-111.md": {
             "title": "Cómo se calcula el Modelo 111",
@@ -50,7 +113,14 @@
             "color": "primary",
             "keywords": "cálculo modelo 111, retenciones netas, 4751, IRPFPR, IRPFA, casilla 29, casilla 30, claves modelo 190",
             "controllers": "Modelo111",
-            "visibility": true
+            "visibility": true,
+            "idpublication": 5100,
+            "assets": {
+                "Assets/como-se-calcula-el-modelo-111/01-retenciones-revertidas-en-un-asiento.png": {
+                    "url": "/MyFiles/2026/11/8473_forja_0o6gmujh7i_01_retenciones_revertidas_en_un_asiento.png?myft=0e15dd65e29cc0b8a98729f68a80d359c10ebf421ee24a1fd6333b516f5a424a",
+                    "sha256": "0c4827fa636e4e771f899527afdd6861752c54396dc2a493ddbb5b61b5910d6a"
+                }
+            }
         }
     },
     "Dev": {
@@ -63,7 +133,8 @@
             "color": "info",
             "keywords": "api,rest,modelo 111,modelo 190,retenciones,irpf,aeat,perceptores,token,curl,mcp",
             "controllers": "ApiModelo111,ApiModelo190",
-            "visibility": true
+            "visibility": true,
+            "idpublication": 5101
         }
     }
 }

@@ -114,7 +114,7 @@ class Modelo111 extends Controller
     }
 
     /**
-     * Datos de la página: menú Informes, submenú de modelos fiscales.
+     * Datos de la página: menú Informes, submenú de fiscalidad España.
      *
      * @return array
      */

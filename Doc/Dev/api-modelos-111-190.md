@@ -1,4 +1,4 @@
-El plugin Modelo111 expone los datos de los modelos 111 (retenciones trimestrales) y 190 (resumen anual) en dos endpoints de solo lectura de la API REST. Calculan con las mismas clases que la pantalla del plugin, así que las cifras coinciden con las que se ven en **menú Informes** → **Modelos fiscales** → **Modelos 111 y 190**. No crean asientos, no guardan datos y no generan los ficheros de la AEAT.
+El plugin Modelo111 expone los datos de los modelos 111 (retenciones trimestrales) y 190 (resumen anual) en dos endpoints de solo lectura de la API REST. Calculan con las mismas clases que la pantalla del plugin, así que las cifras coinciden con las que se ven en **menú Informes** → **Fiscalidad España** → **Modelos 111 y 190**. No crean asientos, no guardan datos y no generan los ficheros de la AEAT.
 
 - `GET /api/3/modelo111`: un trimestre. Devuelve el resumen, las casillas y el resultado.
 - `GET /api/3/modelo190`: el año completo. Devuelve el resumen, tres casillas y el detalle por perceptor. Es una declaración informativa y su `resultado` es `null`.

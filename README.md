@@ -2,7 +2,7 @@
 Plugin para FacturaScripts con los modelos 111 y 190 para la hacienda española.
 - https://facturascripts.com/plugins/modelo111
 
-Muestra y genera los datos de ambos modelos desde el menú **Informes → Modelos fiscales → Modelos 111 y 190**, con descarga de los ficheros de presentación de la AEAT (.111 en los trimestres y .190 en el anual), Excel, impresión y generación de los asientos de obligación y pago.
+Muestra y genera los datos de ambos modelos desde el menú **Informes → Fiscalidad España → Modelos 111 y 190**, con descarga de los ficheros de presentación de la AEAT (.111 en los trimestres y .190 en el anual), Excel, impresión y generación de los asientos de obligación y pago.
 
 Las retenciones de alquileres no se incluyen en el cálculo: asigna la cuenta especial **IRPFA** a la subcuenta de retenciones de alquileres (o a su cuenta) para que queden fuera, ya que corresponden al modelo 115.
 
